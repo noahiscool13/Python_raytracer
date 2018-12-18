@@ -2,7 +2,7 @@
 # https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/ray-triangle-intersection-geometric-solution
 # https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
 
-from math import tan, pi
+
 
 import numpy as np
 
@@ -13,60 +13,14 @@ from Shaders import *
 from MathUtil import *
 from SceneObjects import *
 
-EPSILON = 0.00001
-
-class Ray:
-    def __init__(self, origin, direction):
-        self.origin = origin
-        self.direction = direction
-
-    def intersect(self, other):
-        if isinstance(other, Triangle):
-
-
-            edge1 = other.b-other.a
-            edge2 = other.c-other.a
-
-            h = self.direction.cross_product(edge2)
-            a = edge1.dot(h)
-
-            if -EPSILON < a < EPSILON:
-                return False
-
-            f = 1.0/a
-            s = self.origin-other.a
-            u = f*(s.dot(h))
-
-            if u<0 or u>1:
-                return False
-
-            q = s.cross_product(edge1)
-            v = f*self.direction.dot(q)
-
-
-            if v<0 or u+v>1:
-                return False
-
-            t = f*edge2.dot(q)
-
-            if t<EPSILON:
-                return False
-
-            return t
-
-
-
-
-
-    def after(self,t):
-        return self.origin+self.direction*t
+from math import *
 
 
 
 
 
 def trace(ray, tris, lights, depth):
-    tnear = 10 ** 10
+    tnear = inf
     firstTri = None
     for tri in tris:
         intersection = ray.intersect(tri)
@@ -82,8 +36,9 @@ def trace(ray, tris, lights, depth):
     posHit = ray.after(tnear)
 
     for light in lights:
-        return diffuse(firstTri,posHit,light)
-    return Vec3(1.0)
+        if check_if_in_light(posHit,light,tris):
+            return diffuse(firstTri,posHit,light)
+    return Vec3(0)
 
 
 

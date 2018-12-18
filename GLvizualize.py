@@ -5,7 +5,19 @@ from OpenGL.GLU import *
 
 from pygame.locals import *
 
-triangles = [[1,1,1],[1,1,2],[1,2,1],[1,1,1],[2,1,1],[1,1,2],[2,1,1],[1,2,1],[1,1,2]]
+from objParser import parse
+
+with open("box.obj", "r") as file:
+    triangles_list = [triangle.toList() for triangle in parse(file.read())]
+    triangles = []
+    for triangle in triangles_list:
+        for point in triangle:
+            triangles.append(point)
+
+
+print(triangles)
+
+#triangles = [[1,1,1],[1,1,2],[1,2,1],[1,1,1],[2,1,1],[1,1,2],[2,1,1],[1,2,1],[1,1,2]]
 #triangles = [[1,1,1],[1,1,2],[1,2,1]]
 
 

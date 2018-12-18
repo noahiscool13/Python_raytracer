@@ -1,6 +1,8 @@
 import numbers
 from math import sqrt
 
+EPSILON = 0.00001
+
 
 class Vec2:
 
