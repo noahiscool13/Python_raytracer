@@ -5,8 +5,9 @@ with open("box.obj", "r") as file:
     scene = parse(file.read())
     triangles = scene.triangles
     lights = scene.lights
+    camera = scene.camera
 
 for x in triangles:
     print(x)
 print(lights[0])
-render(triangles, lights, 0, 0)
+render(triangles, lights, camera)

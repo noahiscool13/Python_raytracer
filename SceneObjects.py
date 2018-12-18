@@ -76,7 +76,14 @@ class Light:
         return f"Light<{self.pos} {self.color}>"
 
 
+class Camera:
+    def __init__(self, pos, direction):
+        self.pos = pos
+        self.direction = direction.unit()
+
+
 class Scene:
-    def __init__(self, triangles, lights):
+    def __init__(self, triangles, lights, camera):
         self.triangles = triangles
         self.lights = lights
+        self.camera = camera

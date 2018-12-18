@@ -16,5 +16,8 @@ def parse(data):
                 triangles.append(Triangle(vertecies[int(r[1])-1],vertecies[int(r[2])-1],vertecies[int(r[3])-1]))
             if r[0] == "light":
                 lights.append(Light(vertecies[int(r[1])-1],vertecies[int(r[2])-1]))
+            if r[0] == "camera":
+                camera = Camera(vertecies[int(r[1])-1],vertecies[int(r[2])-1])
 
-    return Scene(triangles,lights)
+
+    return Scene(triangles,lights,camera)

@@ -42,7 +42,7 @@ def trace(ray, tris, lights, depth):
 
 
 
-def render(objects, lights, camPos, camDir):
+def render(objects, lights, camera):
     a = []
     width = 400
     height = 200
@@ -60,7 +60,7 @@ def render(objects, lights, camPos, camDir):
             raydir = Vec3(xx, yy, -1)
             raydir.normalize()
             #print(raydir)
-            ray = Ray(Vec3(0,0,8), raydir)
+            ray = Ray(camera.pos, raydir)
             t.append(trace(ray, objects, lights, 1).toList())
         a.append(t)
     a = np.array(a)
