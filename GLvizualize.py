@@ -6,9 +6,10 @@ from OpenGL.GLU import *
 from pygame.locals import *
 
 from objParser import parse
+from Shaders import *
 
 with open("box.obj", "r") as file:
-    triangles_list = [triangle.toList() for triangle in parse(file.read())]
+    triangles_list = parse(file.read())
     triangles = []
     for triangle in triangles_list:
         for point in triangle:
@@ -16,9 +17,6 @@ with open("box.obj", "r") as file:
 
 
 print(triangles)
-
-#triangles = [[1,1,1],[1,1,2],[1,2,1],[1,1,1],[2,1,1],[1,1,2],[2,1,1],[1,2,1],[1,1,2]]
-#triangles = [[1,1,1],[1,1,2],[1,2,1]]
 
 
 def main():
@@ -66,11 +64,12 @@ def main():
 
         # glRotatef(1, 3, 1, 1)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-
+        light = Light(Vec3(-0.2,-0.2,2),Vec3(1))
         glBegin(GL_TRIANGLES)
-        for point in triangles:
-            glColor4fv((1, 1, 1, 1))
-            glVertex3fv(point)
+        for triangle in triangles_list:
+            for point in triangle:
+                glColor4fv((*diffuse(triangle,point,light), 1))
+                glVertex3fv(point.toList())
         glEnd()
 
         pygame.display.flip()

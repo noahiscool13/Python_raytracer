@@ -120,3 +120,8 @@ class Vec3:
 
     def toList(self):
         return [self.x,self.y,self.z]
+
+    def __iter__(self):
+        yield self.x
+        yield self.y
+        yield self.z

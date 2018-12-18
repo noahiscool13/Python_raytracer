@@ -69,6 +69,11 @@ class Triangle():
     def toList(self):
         return [self.a.toList(), self.b.toList(), self.c.toList()]
 
+    def __iter__(self):
+        yield self.a
+        yield self.b
+        yield self.c
+
 class Light:
     def __init__(self, pos, color):
         self.pos = pos
