@@ -5,7 +5,7 @@ with open("box.obj", "r") as file:
     triangles = parse(file.read())
 
 #triangles = [Triangle(Vec3(0,5,-2),Vec3(-0.2,-5,-2), Vec3(0.2,-5,-2))]
-lights = [Light(Vec3(0, 0, -1), Vec3(1))]
+lights = [Light(Vec3(-10, -1, 10), Vec3(1))]
 for x in triangles:
     print(x)
 print(lights[0])

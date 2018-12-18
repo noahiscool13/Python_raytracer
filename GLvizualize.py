@@ -6,7 +6,7 @@ from OpenGL.GLU import *
 from pygame.locals import *
 
 triangles = [[1,1,1],[1,1,2],[1,2,1],[1,1,1],[2,1,1],[1,1,2],[2,1,1],[1,2,1],[1,1,2]]
-triangles = [[1,1,1],[1,1,2],[1,2,1]]
+#triangles = [[1,1,1],[1,1,2],[1,2,1]]
 
 
 def main():

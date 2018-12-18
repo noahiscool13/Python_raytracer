@@ -1,5 +1,6 @@
 # Port from https://www.scratchapixel.com/code.php?id=3&origin=/lessons/3d-basic-rendering/introduction-to-ray-tracing
 # https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/ray-triangle-intersection-geometric-solution
+# https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
 
 from math import tan, pi
 
@@ -23,41 +24,39 @@ class Ray:
         if isinstance(other, Triangle):
 
 
-            normal = other.normal()
+            edge1 = other.b-other.a
+            edge2 = other.c-other.a
 
-            normalDotRayDir = normal.dot(self.direction)
+            h = self.direction.cross_product(edge2)
+            a = edge1.dot(h)
 
-            if abs(normalDotRayDir) < EPSILON:
+            if -EPSILON < a < EPSILON:
                 return False
 
-            d = normal.dot(other.a)
+            f = 1.0/a
+            s = self.origin-other.a
+            u = f*(s.dot(h))
 
-            t = (normal.dot(self.origin) + d) / normalDotRayDir
-
-            if t < 0:
+            if u<0 or u>1:
                 return False
 
-            p = self.origin + t * self.direction
+            q = s.cross_product(edge1)
+            v = f*self.direction.dot(q)
 
-            edge0 = other.b - other.a
-            vp0 = p - other.a
-            c = edge0.cross_product(vp0)
-            if normal.dot(c) < 0:
+
+            if v<0 or u+v>1:
                 return False
 
-            edge1 = other.c - other.b
-            vp1 = p - other.b
-            c = edge1.cross_product(vp1)
-            if normal.dot(c) < 0:
-                return False
+            t = f*edge2.dot(q)
 
-            edge2 = other.a - other.c
-            vp2 = p - other.c
-            c = edge2.cross_product(vp2)
-            if normal.dot(c) < 0:
+            if t<EPSILON:
                 return False
 
             return t
+
+
+
+
 
     def after(self,t):
         return self.origin+self.direction*t
