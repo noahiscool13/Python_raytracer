@@ -6,6 +6,7 @@ from math import tan, pi
 import numpy as np
 
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 from Shaders import *
 from MathUtil import *
@@ -77,35 +78,35 @@ def trace(ray, tris, lights, depth):
                 firstTri = tri
 
     if not firstTri:
-        return Vec3(0,0,0)
+        return Vec3(0.0)
 
     posHit = ray.after(tnear)
 
     for light in lights:
         return diffuse(firstTri,posHit,light)
-
-    return Vec3(1,1,1)*1.0
+    return Vec3(1.0)
 
 
 
 def render(objects, lights, camPos, camDir):
     a = []
-    width = 200
-    height = 100
+    width = 400
+    height = 200
     invWidth = 1 / width
     invHeight = 1 / height
     fov = 30
     aspectratio = width / height
     angle = tan(pi * 0.5 * fov / 180)
 
-    for y in range(0, height):
+    for y in tqdm(range(0, height)):
         t = []
         for x in range(0, width):
             xx = (2 * ((x + 0.5) * invWidth) - 1) * angle * aspectratio
             yy = (1 - 2 * ((y + 0.5) * invHeight)) * angle
             raydir = Vec3(xx, yy, -1)
             raydir.normalize()
-            ray = Ray(Vec3(0), raydir)
+            #print(raydir)
+            ray = Ray(Vec3(0,0,8), raydir)
             t.append(trace(ray, objects, lights, 1).toList())
         a.append(t)
     a = np.array(a)
@@ -113,8 +114,9 @@ def render(objects, lights, camPos, camDir):
     plt.imshow(a)
     plt.show()
 
+if __name__ == '__main__':
 
-triangles = [Triangle(Vec3(1,1,-2),Vec3(0,0,-5),Vec3(0,1,-5))]
-lights = [Light(Vec3(0,0,0),Vec3(0.4,0.2,0.6))]
-lights = [Light(Vec3(0,0,0),Vec3(1,1,1))]
-render(triangles, lights, 0,0)
+    triangles = [Triangle(Vec3(1,1,-2),Vec3(0,0,-5),Vec3(0,1,-5))]
+    lights = [Light(Vec3(0,0,0),Vec3(0.4,0.2,0.6))]
+    lights = [Light(Vec3(0,0,0),Vec3(1,1,1))]
+    render(triangles, lights, 0,0)

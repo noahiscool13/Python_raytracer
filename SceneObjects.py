@@ -14,7 +14,13 @@ class Triangle():
 
         return aToB.cross_product(aToC).unit()
 
+    def __str__(self):
+        return f"Triangle<{self.a} {self.b} {self.c}>"
+
 class Light:
     def __init__(self, pos, color):
         self.pos = pos
         self.color = color
+
+    def __str__(self):
+        return f"Light<{self.pos} {self.color}>"
