@@ -73,7 +73,7 @@ def main():
         glEnd()
 
         pygame.display.flip()
-        pygame.time.wait(1000)
+        pygame.time.wait(100)
 
 
 
