@@ -5,6 +5,7 @@ def parse(data):
     data = data.splitlines()
     vertecies = []
     triangles = []
+    lights = []
 
     for row in data:
         if row:
@@ -13,5 +14,7 @@ def parse(data):
                 vertecies.append(Vec3(float(r[1]),float(r[2]),float(r[3])))
             if r[0] == "f":
                 triangles.append(Triangle(vertecies[int(r[1])-1],vertecies[int(r[2])-1],vertecies[int(r[3])-1]))
+            if r[0] == "light":
+                lights.append(Light(vertecies[int(r[1])-1],vertecies[int(r[2])-1]))
 
-    return triangles
+    return Scene(triangles,lights)

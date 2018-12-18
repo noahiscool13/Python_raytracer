@@ -9,14 +9,10 @@ from objParser import parse
 from Shaders import *
 
 with open("box.obj", "r") as file:
-    triangles_list = parse(file.read())
-    triangles = []
-    for triangle in triangles_list:
-        for point in triangle:
-            triangles.append(point)
+    scene = parse(file.read())
+    triangles = scene.triangles
+    lights = scene.lights
 
-
-print(triangles)
 
 
 def main():
@@ -64,11 +60,10 @@ def main():
 
         # glRotatef(1, 3, 1, 1)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        light = Light(Vec3(-0.2,-0.2,2),Vec3(1))
         glBegin(GL_TRIANGLES)
-        for triangle in triangles_list:
+        for triangle in triangles:
             for point in triangle:
-                glColor4fv((*diffuse(triangle,point,light), 1))
+                glColor4fv((*diffuse(triangle,point,lights[0]), 1))
                 glVertex3fv(point.toList())
         glEnd()
 
