@@ -44,8 +44,8 @@ def trace(ray, tris, lights, depth):
 
 def render(objects, lights, camera):
     a = []
-    width = 400
-    height = 200
+    width = 40
+    height = 20
     invWidth = 1 / width
     invHeight = 1 / height
     fov = 30

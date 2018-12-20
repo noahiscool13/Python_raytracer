@@ -8,7 +8,7 @@ from pygame.locals import *
 from objParser import parse
 from Shaders import *
 
-with open("box.obj", "r") as file:
+with open("teapot.obj", "r") as file:
     scene = parse(file.read())
     triangles = scene.triangles
     lights = scene.lights
@@ -25,7 +25,7 @@ def main():
 
     gluPerspective(30, (display[0] / display[1]), 0.1, 50.0)
 
-    glTranslatef(0.0, 0.0, -8)
+    glTranslatef(*-scene.camera.pos)
 
     while True:
         for event in pygame.event.get():

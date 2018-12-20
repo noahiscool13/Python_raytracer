@@ -1,7 +1,7 @@
 from objParser import *
 from RayTraceCore import *
 
-with open("box.obj", "r") as file:
+with open("teapot.obj", "r") as file:
     scene = parse(file.read())
     triangles = scene.triangles
     lights = scene.lights
