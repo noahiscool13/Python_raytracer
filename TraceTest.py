@@ -7,7 +7,7 @@ with open("teapot.obj", "r") as file:
     lights = scene.lights
     camera = scene.camera
 
-for x in triangles:
-    print(x)
-print(lights[0])
+# for x in triangles:
+#     print(x)
+# print(lights[0])
 render(triangles, lights, camera)

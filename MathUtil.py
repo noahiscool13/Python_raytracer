@@ -3,6 +3,10 @@ from math import sqrt
 
 EPSILON = 0.00001
 
+def clip(val, lower = 0, upper = 1):
+    if isinstance(val, list):
+        return [clip(v,lower,upper) for v in val]
+    return max(lower,min(upper,val))
 
 class Vec2:
 
@@ -107,6 +111,7 @@ class Vec3:
         self.x+=other.x
         self.y+=other.y
         self.z+=other.z
+        return self
 
     def __neg__(self):
         return Vec3(-self.x, -self.y, -self.z)

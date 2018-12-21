@@ -35,17 +35,24 @@ def trace(ray, tris, lights, depth):
 
     posHit = ray.after(tnear)
 
+    col = Vec3(0.0)
+
     for light in lights:
         if check_if_in_light(posHit,light,tris):
-            return diffuse(firstTri,posHit,light)
-    return Vec3(0)
+            normal = firstTri.normal()
+            if (ray.origin-posHit).dot(normal)<0:
+                normal = -normal
+                print("oink")
+            col += diffuse(normal,posHit,light.pos,firstTri.Kd) * light.color
+            col += specular(normal,posHit,light.pos,ray.origin,firstTri.Ks,firstTri.Ns) *light.color
+    return col
 
 
 
 def render(objects, lights, camera):
     a = []
-    width = 40
-    height = 20
+    width = 200
+    height = 100
     invWidth = 1 / width
     invHeight = 1 / height
     fov = 30
@@ -61,7 +68,7 @@ def render(objects, lights, camera):
             raydir.normalize()
             #print(raydir)
             ray = Ray(camera.pos, raydir)
-            t.append(trace(ray, objects, lights, 1).toList())
+            t.append(clip(trace(ray, objects, lights, 1).toList()))
         a.append(t)
     a = np.array(a)
     print(a)

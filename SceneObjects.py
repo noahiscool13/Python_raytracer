@@ -1,6 +1,5 @@
 from MathUtil import *
 
-
 class Ray:
     def __init__(self, origin, direction):
         self.origin = origin
@@ -43,11 +42,13 @@ class Ray:
 
 
 class Triangle():
-    def __init__(self, a, b, c, kd=Vec3(1, 1, 1)):
+    def __init__(self, a, b, c, Kd=Vec3(0.4), Ks = Vec3(0.6), Ns = 2):
         self.a = a
         self.b = b
         self.c = c
-        self.kd = kd
+        self.Kd = Kd
+        self.Ks = Ks
+        self.Ns = Ns
 
     def normal(self):
         aToB = self.b - self.a
