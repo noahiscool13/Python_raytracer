@@ -43,16 +43,16 @@ def trace(ray, tris, lights, depth):
             if (ray.origin-posHit).dot(normal)<0:
                 normal = -normal
                 print("oink")
-            col += diffuse(normal,posHit,light.pos,firstTri.Kd) * light.color
-            col += specular(normal,posHit,light.pos,ray.origin,firstTri.Ks,firstTri.Ns) *light.color
+            col += diffuse(normal,posHit,light.pos,firstTri.properties.Kd) * light.color
+            col += specular(normal,posHit,light.pos,ray.origin,firstTri.properties.Ks,firstTri.properties.Ns) *light.color
     return col
 
 
 
 def render(objects, lights, camera):
     a = []
-    width = 200
-    height = 100
+    width = 20
+    height = 10
     invWidth = 1 / width
     invHeight = 1 / height
     fov = 30
