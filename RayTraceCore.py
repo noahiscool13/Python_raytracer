@@ -17,6 +17,8 @@ from math import *
 
 from multiprocessing import Pool
 
+from random import random
+
 
 
 def trace(ray, tris, lights, depth):
@@ -53,24 +55,30 @@ def render_row(settings):
     y = settings.row
     t = (y,[])
     for x in range(0, settings.width):
-        xx = (2 * ((x + 0.5) * settings.invWidth) - 1) * settings.angle * settings.aspectratio
-        yy = (1 - 2 * ((y + 0.5) * settings.invHeight)) * settings.angle
-        raydir = Vec3(xx, yy, -1)
-        raydir.normalize()
-        ray = Ray(settings.scene.camera.point.pos, raydir)
-        t[1].append(clip(trace(ray, settings.scene.triangles, settings.scene.lights, 1).toList()))
+        col = Vec3()
+        for _ in range(settings.ss):
+            x_offset = random()
+            y_offset = random()
+            xx = (2 * ((x + x_offset + 0.5) * settings.invWidth) - 1) * settings.angle * settings.aspectratio
+            yy = (1 - 2 * ((y + y_offset + 0.5) * settings.invHeight)) * settings.angle
+            raydir = Vec3(xx, yy, -1)
+            raydir.normalize()
+            ray = Ray(settings.scene.camera.point.pos, raydir)
+            col += trace(ray, settings.scene.triangles, settings.scene.lights, 1)
+        col /= settings.ss
+        t[1].append(clip(col.toList()))
     return t
 
 
 def render(scene):
     row_list = []
 
-    width = 100
-    height = 50
+    width = 40
+    height = 20
 
 
     for y in range(0, height):
-        row_list.append(RowSettings(scene,width=width, height=height, row=y))
+        row_list.append(RowSettings(scene,width=width, height=height, row=y, ss = 3))
     with Pool() as p:
         img = list(tqdm(p.imap(render_row,row_list),total=height))
 
@@ -79,7 +87,7 @@ def render(scene):
     a = []
     for row in img:
         a.append(row[1])
-    print(a)
+    #print(a)
     plt.imshow(a)
     plt.show()
 

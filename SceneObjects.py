@@ -18,8 +18,14 @@ class Point:
         else:
             self.normal = Vec3(0)
 
+    def __eq__(self, other):
+        return self.pos == other.pos and self.normal == other.normal
+
     def toList(self):
         return self.pos.toList()
+
+    def __hash__(self):
+        return hash((self.pos,self.normal))
 
 
 class Ray:
@@ -148,7 +154,7 @@ class Scene:
 
 
 class RowSettings:
-    def __init__(self, scene, width = 8, height = 4, fov = 30, row = 0):
+    def __init__(self, scene, width = 8, height = 4, fov = 30, row = 0, ss = 4):
         self.scene = scene
         self.width = width
         self.height = height
@@ -158,3 +164,4 @@ class RowSettings:
         self.invHeight = 1 / height
         self.angle = tan(pi * 0.5 * fov / 180)
         self.row = row
+        self.ss = ss
