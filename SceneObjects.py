@@ -1,4 +1,6 @@
 from MathUtil import *
+from math import *
+
 
 class Properties:
     def __init__(self,Kd=Vec3(0.4), Ks = Vec3(0.6), Ns = 2, smoothNormal = True):
@@ -6,6 +8,7 @@ class Properties:
         self.Ks = Ks
         self.Ns = Ns
         self.smoothNormal = smoothNormal
+
 
 class Point:
     def __init__(self, pos, normal = None):
@@ -17,6 +20,7 @@ class Point:
 
     def toList(self):
         return self.pos.toList()
+
 
 class Ray:
     def __init__(self, origin, direction):
@@ -124,6 +128,7 @@ class Camera:
     def __init__(self, point):
         self.point = point
 
+
 class Scene:
     def __init__(self, triangles = [], points = [], lights = [], camera  = None):
         self.triangles = triangles
@@ -140,3 +145,16 @@ class Scene:
 
         for point in self.points:
             point.normal.normalize()
+
+
+class RowSettings:
+    def __init__(self, scene, width = 8, height = 4, fov = 30, row = 0):
+        self.scene = scene
+        self.width = width
+        self.height = height
+        self.fov = fov
+        self.aspectratio = width / height
+        self.invWidth = 1 / width
+        self.invHeight = 1 / height
+        self.angle = tan(pi * 0.5 * fov / 180)
+        self.row = row

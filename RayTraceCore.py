@@ -15,7 +15,7 @@ from SceneObjects import *
 
 from math import *
 
-
+from multiprocessing import Pool
 
 
 
@@ -49,28 +49,36 @@ def trace(ray, tris, lights, depth):
 
 
 
-def render(objects, lights, camera):
-    a = []
-    width = 80
-    height = 40
-    invWidth = 1 / width
-    invHeight = 1 / height
-    fov = 30
-    aspectratio = width / height
-    angle = tan(pi * 0.5 * fov / 180)
+def render_row(settings):
+    y = settings.row
+    t = (y,[])
+    for x in range(0, settings.width):
+        xx = (2 * ((x + 0.5) * settings.invWidth) - 1) * settings.angle * settings.aspectratio
+        yy = (1 - 2 * ((y + 0.5) * settings.invHeight)) * settings.angle
+        raydir = Vec3(xx, yy, -1)
+        raydir.normalize()
+        ray = Ray(settings.scene.camera.point.pos, raydir)
+        t[1].append(clip(trace(ray, settings.scene.triangles, settings.scene.lights, 1).toList()))
+    return t
 
-    for y in tqdm(range(0, height)):
-        t = []
-        for x in range(0, width):
-            xx = (2 * ((x + 0.5) * invWidth) - 1) * angle * aspectratio
-            yy = (1 - 2 * ((y + 0.5) * invHeight)) * angle
-            raydir = Vec3(xx, yy, -1)
-            raydir.normalize()
-            #print(raydir)
-            ray = Ray(camera.point.pos, raydir)
-            t.append(clip(trace(ray, objects, lights, 1).toList()))
-        a.append(t)
-    a = np.array(a)
+
+def render(scene):
+    row_list = []
+
+    width = 100
+    height = 50
+
+
+    for y in range(0, height):
+        row_list.append(RowSettings(scene,width=width, height=height, row=y))
+    with Pool() as p:
+        img = list(tqdm(p.imap(render_row,row_list),total=height))
+
+    img = sorted(img)
+
+    a = []
+    for row in img:
+        a.append(row[1])
     print(a)
     plt.imshow(a)
     plt.show()
