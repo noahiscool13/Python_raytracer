@@ -39,10 +39,10 @@ def trace(ray, tris, lights, depth):
 
     for light in lights:
         if check_if_in_light(posHit,light,tris):
-            normal = firstTri.normal()
+            u,v = ray.intersect_uv(firstTri)
+            normal = firstTri.b.normal * u + firstTri.c.normal * v + firstTri.a.normal * (1-u-v)
             if (ray.origin-posHit).dot(normal)<0:
                 normal = -normal
-                print("oink")
             col += diffuse(normal,posHit,light.pos,firstTri.properties.Kd) * light.color
             col += specular(normal,posHit,light.pos,ray.origin,firstTri.properties.Ks,firstTri.properties.Ns) *light.color
     return col
@@ -51,8 +51,8 @@ def trace(ray, tris, lights, depth):
 
 def render(objects, lights, camera):
     a = []
-    width = 20
-    height = 10
+    width = 80
+    height = 40
     invWidth = 1 / width
     invHeight = 1 / height
     fov = 30
@@ -67,7 +67,7 @@ def render(objects, lights, camera):
             raydir = Vec3(xx, yy, -1)
             raydir.normalize()
             #print(raydir)
-            ray = Ray(camera.pos, raydir)
+            ray = Ray(camera.point.pos, raydir)
             t.append(clip(trace(ray, objects, lights, 1).toList()))
         a.append(t)
     a = np.array(a)

@@ -25,7 +25,7 @@ def main():
 
     gluPerspective(30, (display[0] / display[1]), 0.1, 50.0)
 
-    glTranslatef(*-scene.camera.pos)
+    glTranslatef(*-scene.camera.point.pos)
 
     while True:
         for event in pygame.event.get():
@@ -63,7 +63,7 @@ def main():
         glBegin(GL_TRIANGLES)
         for triangle in triangles:
             for point in triangle:
-                glColor4fv((*diffuse(triangle,point,lights[0]), 1))
+                glColor4fv((*diffuse(point.normal,point.pos,lights[0].pos,triangle.properties.Kd), 1))
                 glVertex3fv(point.toList())
         glEnd()
 

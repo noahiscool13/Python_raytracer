@@ -79,9 +79,10 @@ class Vec3:
 
     def normalize(self):
         length = self.length()
-        self.x /= length
-        self.y /= length
-        self.z /= length
+        if length>0:
+            self.x /= length
+            self.y /= length
+            self.z /= length
 
     def unit(self):
         length = self.length()
@@ -103,6 +104,7 @@ class Vec3:
         self.x -= other.x
         self.y -= other.y
         self.z -= other.z
+        return self
 
     def __add__(self, other):
         return Vec3(self.x + other.x, self.y + other.y, self.z + other.z)
