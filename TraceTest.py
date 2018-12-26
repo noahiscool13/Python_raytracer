@@ -5,7 +5,7 @@ if __name__ == '__main__':
 
     with open("teapot.obj", "r") as file:
         scene = parse(file.read())
-        triangles = scene.triangles
+        triangles = scene.objects
         lights = scene.lights
         camera = scene.camera
 

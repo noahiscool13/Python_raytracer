@@ -28,9 +28,9 @@ def trace(ray, tris, lights, depth):
         intersection = ray.intersect(tri)
 
         if intersection is not False:
-            if intersection < tnear:
-                tnear = intersection
-                firstTri = tri
+            if intersection.t < tnear:
+                tnear = intersection.t
+                firstTri = intersection.obj
 
     if not firstTri:
         return Vec3(0.0)
@@ -64,7 +64,7 @@ def render_row(settings):
             raydir = Vec3(xx, yy, -1)
             raydir.normalize()
             ray = Ray(settings.scene.camera.point.pos, raydir)
-            col += trace(ray, settings.scene.triangles, settings.scene.lights, 1)
+            col += trace(ray, settings.scene.objects, settings.scene.lights, 1)
         col /= settings.ss
         t[1].append(clip(col.toList()))
     return t
@@ -73,8 +73,8 @@ def render_row(settings):
 def render(scene):
     row_list = []
 
-    width = 40
-    height = 20
+    width = 80
+    height = 40
 
 
     for y in range(0, height):
@@ -87,13 +87,6 @@ def render(scene):
     a = []
     for row in img:
         a.append(row[1])
-    #print(a)
+    print(a)
     plt.imshow(a)
     plt.show()
-
-if __name__ == '__main__':
-
-    triangles = [Triangle(Vec3(1,1,-2),Vec3(0,0,-5),Vec3(0,1,-5))]
-    lights = [Light(Vec3(0,0,0),Vec3(0.4,0.2,0.6))]
-    lights = [Light(Vec3(0,0,0),Vec3(1,1,1))]
-    render(triangles, lights, 0,0)

@@ -2,6 +2,12 @@ from MathUtil import *
 from math import *
 
 
+class Hit:
+    def __init__(self, obj, t):
+        self.obj = obj
+        self.t = t
+
+
 class Properties:
     def __init__(self,Kd=Vec3(0.4), Ks = Vec3(0.6), Ns = 2, smoothNormal = True):
         self.Kd = Kd
@@ -63,7 +69,70 @@ class Ray:
             if t < EPSILON:
                 return False
 
-            return t
+            return Hit(other, t)
+
+        elif isinstance(other, AAbox):
+
+            # https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection
+
+            tmin = (other.min_corner.x - self.origin.x) / self.direction.x
+            tmax = (other.max_corner.x - self.origin.x) / self.direction.x
+
+            if tmin > tmax:
+                tmin, tmax = tmax, tmin
+
+            tymin = (other.min_corner.y - self.origin.y) / self.direction.y
+            tymax = (other.max_corner.y - self.origin.y) / self.direction.y
+
+            if tymin > tymax:
+                tymin, tymax = tymax, tymin
+
+            if (tmin > tymax) or (tymin > tmax):
+                return False
+
+            if tymin > tmin:
+                tmin = tymin
+
+            if tymax < tmax:
+                tmax = tymax
+
+            tzmin = (other.min_corner.z - self.origin.z) / self.direction.z
+            tzmax = (other.max_corner.z - self.origin.z) / self.direction.z
+
+            if tzmin > tzmax:
+                tzmin, tzmax = tzmax, tzmin
+
+            if (tmin > tzmax) or (tzmin > tmax):
+                return False
+
+            if tzmin > tmin:
+                tmin = tzmin
+
+            if tzmax < tmax:
+                tmax = tzmax
+
+            return Hit(other,min(tmin,tmax))
+
+        elif isinstance(other, AABB):
+            if self.intersect(other.box):
+
+                tnear = inf
+                firstObj = None
+
+                for obj in other.objects:
+                    intersection = self.intersect(obj)
+
+                    if intersection is not False:
+                        if intersection.t < tnear:
+
+                            tnear = intersection.t
+                            firstObj = intersection.obj
+
+                if firstObj:
+                    return Hit(firstObj,tnear)
+
+            return False
+
 
     def intersect_uv(self, other):
         if isinstance(other, Triangle):
@@ -95,7 +164,7 @@ class Triangle():
 
     def add_norm_to_vertices(self):
         norm = self.un_normalized_normal()
-        # print(norm,self.a.normal)
+
         self.a.normal += norm
         self.b.normal += norm
         self.c.normal += norm
@@ -120,6 +189,19 @@ class Triangle():
         yield self.b
         yield self.c
 
+    def box(self):
+        xmin = min(self.a.pos.x, self.b.pos.x, self.c.pos.x)
+        ymin = min(self.a.pos.y, self.b.pos.y, self.c.pos.y)
+        zmin = min(self.a.pos.z, self.b.pos.z, self.c.pos.z)
+
+        xmax = max(self.a.pos.x, self.b.pos.x, self.c.pos.x)
+        ymax = max(self.a.pos.y, self.b.pos.y, self.c.pos.y)
+        zmax = max(self.a.pos.z, self.b.pos.z, self.c.pos.z)
+        
+        minvec = Vec3(xmin, ymin, zmin)
+        maxvec = Vec3(xmax, ymax, zmax)
+        
+        return AAbox(minvec,maxvec)
 
 class Light:
     def __init__(self, pos, color):
@@ -137,17 +219,14 @@ class Camera:
 
 class Scene:
     def __init__(self, triangles = [], points = [], lights = [], camera  = None):
-        self.triangles = triangles
+        self.objects = triangles
         self.lights = lights
         self.camera = camera
         self.points = points
 
     def calc_vertex_normals(self):
-        for triangle in self.triangles:
-            norm = triangle.un_normalized_normal()
-            triangle.a.normal += norm
-            triangle.b.normal += norm
-            triangle.c.normal += norm
+        for shape in self.objects:
+            shape.add_norm_to_vertices()
 
         for point in self.points:
             point.normal.normalize()
@@ -165,3 +244,42 @@ class RowSettings:
         self.angle = tan(pi * 0.5 * fov / 180)
         self.row = row
         self.ss = ss
+
+
+class AAbox:
+    def __init__(self, min_corner, max_corner):
+        self.min_corner = min_corner
+        self.max_corner = max_corner
+    
+    def extend(self, box):
+        xmin = min(self.min_corner.x,box.min_corner.x)
+        ymin = min(self.min_corner.y, box.min_corner.y)
+        zmin = min(self.min_corner.z, box.min_corner.z)
+
+        xmax = max(self.max_corner.x, box.max_corner.x)
+        ymax = max(self.max_corner.y, box.max_corner.y)
+        zmax = max(self.max_corner.z, box.max_corner.z)
+        
+        self.min_corner = Vec3(xmin, ymin, zmin)
+        self.max_corner = Vec3(xmax, ymax, zmax)
+
+class AABB:
+    def __init__(self, box = None, objects = None):
+        self.box = box
+        if objects:
+            self.objects = objects
+        else:
+            self.objects = []
+    
+    def add(self, other):
+        self.objects.append(other)
+        
+        if self.box:
+            self.box.extend(other.box())
+        
+        else:
+            self.box = other.box()
+
+    def add_norm_to_vertices(self):
+        for shape in self.objects:
+            shape.add_norm_to_vertices()
