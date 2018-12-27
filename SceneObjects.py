@@ -263,6 +263,43 @@ class AAbox:
         self.min_corner = Vec3(xmin, ymin, zmin)
         self.max_corner = Vec3(xmax, ymax, zmax)
 
+    def intersect(self, other):
+        if isinstance(other, Triangle):
+            # TODO better implementation of this, this has false positives
+
+            if other.a.pos.x < self.min_corner.x \
+                    and other.b.pos.x < self.min_corner.x \
+                    and other.c.pos.x < self.min_corner.x:
+                return False
+            
+            if other.a.pos.y < self.min_corner.y \
+                    and other.b.pos.y < self.min_corner.y \
+                    and other.c.pos.y < self.min_corner.y:
+                return False
+            
+            if other.a.pos.z < self.min_corner.z \
+                    and other.b.pos.z < self.min_corner.z \
+                    and other.c.pos.z < self.min_corner.z:
+                return False
+
+            if other.a.pos.x < self.max_corner.x \
+                    and other.b.pos.x < self.max_corner.x \
+                    and other.c.pos.x < self.max_corner.x:
+                return False
+
+            if other.a.pos.y < self.max_corner.y \
+                    and other.b.pos.y < self.max_corner.y \
+                    and other.c.pos.y < self.max_corner.y:
+                return False
+
+            if other.a.pos.z < self.max_corner.z \
+                    and other.b.pos.z < self.max_corner.z \
+                    and other.c.pos.z < self.max_corner.z:
+                return False
+
+            return True
+                
+
 class AABB:
     def __init__(self, box = None, objects = None):
         self.box = box
@@ -283,3 +320,14 @@ class AABB:
     def add_norm_to_vertices(self):
         for shape in self.objects:
             shape.add_norm_to_vertices()
+
+class KDtree:
+    def __init__(self, depth, obj = None):
+        self.depth = depth
+
+        if obj:
+            self.obj = obj
+        else:
+            self.obj = []
+
+
