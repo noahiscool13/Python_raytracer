@@ -1,3 +1,5 @@
+from random import random, uniform
+
 from MathUtil import *
 from math import *
 
@@ -9,7 +11,7 @@ class Hit:
 
 
 class Properties:
-    def __init__(self,Kd=Vec3(0.4), Ks = Vec3(0.6), Ns = 2, smoothNormal = True):
+    def __init__(self, Kd=Vec3(0.4), Ks=Vec3(0.6), Ns=2, smoothNormal=True):
         self.Kd = Kd
         self.Ks = Ks
         self.Ns = Ns
@@ -17,7 +19,7 @@ class Properties:
 
 
 class Point:
-    def __init__(self, pos, normal = None):
+    def __init__(self, pos, normal=None):
         self.pos = pos
         if normal:
             self.normal = normal
@@ -31,7 +33,7 @@ class Point:
         return self.pos.toList()
 
     def __hash__(self):
-        return hash((self.pos,self.normal))
+        return hash((self.pos, self.normal))
 
 
 class Ray:
@@ -111,7 +113,7 @@ class Ray:
             if tzmax < tmax:
                 tmax = tzmax
 
-            return Hit(other,min(tmin,tmax))
+            return Hit(other, min(tmin, tmax))
 
         elif isinstance(other, AABB):
             if self.intersect(other.box):
@@ -124,15 +126,13 @@ class Ray:
 
                     if intersection is not False:
                         if intersection.t < tnear:
-
                             tnear = intersection.t
                             firstObj = intersection.obj
 
                 if firstObj:
-                    return Hit(firstObj,tnear)
+                    return Hit(firstObj, tnear)
 
             return False
-
 
     def intersect_uv(self, other):
         if isinstance(other, Triangle):
@@ -156,7 +156,7 @@ class Ray:
 
 
 class Triangle():
-    def __init__(self, a, b, c, properties = Properties()):
+    def __init__(self, a, b, c, properties=Properties()):
         self.a = a
         self.b = b
         self.c = c
@@ -197,11 +197,12 @@ class Triangle():
         xmax = max(self.a.pos.x, self.b.pos.x, self.c.pos.x)
         ymax = max(self.a.pos.y, self.b.pos.y, self.c.pos.y)
         zmax = max(self.a.pos.z, self.b.pos.z, self.c.pos.z)
-        
+
         minvec = Vec3(xmin, ymin, zmin)
         maxvec = Vec3(xmax, ymax, zmax)
-        
-        return AAbox(minvec,maxvec)
+
+        return AAbox(minvec, maxvec)
+
 
 class Light:
     def __init__(self, pos, color):
@@ -218,7 +219,7 @@ class Camera:
 
 
 class Scene:
-    def __init__(self, triangles = [], points = [], lights = [], camera  = None):
+    def __init__(self, triangles=[], points=[], lights=[], camera=None):
         self.objects = triangles
         self.lights = lights
         self.camera = camera
@@ -233,7 +234,7 @@ class Scene:
 
 
 class RowSettings:
-    def __init__(self, scene, width = 8, height = 4, fov = 30, row = 0, ss = 4):
+    def __init__(self, scene, width=8, height=4, fov=30, row=0, ss=4):
         self.scene = scene
         self.width = width
         self.height = height
@@ -250,16 +251,30 @@ class AAbox:
     def __init__(self, min_corner, max_corner):
         self.min_corner = min_corner
         self.max_corner = max_corner
-    
+
+    def size(self):
+        x = self.max_corner.x - self.min_corner.x
+        y = self.max_corner.y - self.min_corner.y
+        z = self.max_corner.z - self.min_corner.z
+
+        return Vec3(x, y, z)
+
+    def surface_area(self):
+        size = self.size()
+        surfaceTop = size.x*size.z
+        surfaceFront = size.x*size.y
+        surfaceSide = size.y*size.z
+        return 2 * (surfaceTop + surfaceFront + surfaceSide)
+
     def extend(self, box):
-        xmin = min(self.min_corner.x,box.min_corner.x)
+        xmin = min(self.min_corner.x, box.min_corner.x)
         ymin = min(self.min_corner.y, box.min_corner.y)
         zmin = min(self.min_corner.z, box.min_corner.z)
 
         xmax = max(self.max_corner.x, box.max_corner.x)
         ymax = max(self.max_corner.y, box.max_corner.y)
         zmax = max(self.max_corner.z, box.max_corner.z)
-        
+
         self.min_corner = Vec3(xmin, ymin, zmin)
         self.max_corner = Vec3(xmax, ymax, zmax)
 
@@ -271,12 +286,12 @@ class AAbox:
                     and other.b.pos.x < self.min_corner.x \
                     and other.c.pos.x < self.min_corner.x:
                 return False
-            
+
             if other.a.pos.y < self.min_corner.y \
                     and other.b.pos.y < self.min_corner.y \
                     and other.c.pos.y < self.min_corner.y:
                 return False
-            
+
             if other.a.pos.z < self.min_corner.z \
                     and other.b.pos.z < self.min_corner.z \
                     and other.c.pos.z < self.min_corner.z:
@@ -298,22 +313,22 @@ class AAbox:
                 return False
 
             return True
-                
+
 
 class AABB:
-    def __init__(self, box = None, objects = None):
+    def __init__(self, box=None, objects=None):
         self.box = box
         if objects:
             self.objects = objects
         else:
             self.objects = []
-    
+
     def add(self, other):
         self.objects.append(other)
-        
+
         if self.box:
             self.box.extend(other.box())
-        
+
         else:
             self.box = other.box()
 
@@ -321,13 +336,54 @@ class AABB:
         for shape in self.objects:
             shape.add_norm_to_vertices()
 
+
 class KDtree:
-    def __init__(self, depth, obj = None):
+    def __init__(self, depth, box):
         self.depth = depth
+        self.box = box
 
-        if obj:
-            self.obj = obj
-        else:
-            self.obj = []
+    @staticmethod
+    def build(depth, box=None, objects=None):
+        if depth < 0 or len(objects) < 30:
+            return AABB(box, objects)
 
+        best_cost = inf
 
+        boxSize = box.size()
+        for _ in range(16):
+            cutLen = uniform(0, boxSize.x)
+
+            leftMax = box.max_corner
+            leftMax.x -= cutLen
+
+            rightMin = box.min_corner
+            rightMin.x += cutLen
+
+            leftBox = AAbox(box.min_corner, leftMax)
+            rightBox = AAbox(rightMin, box.max_corner)
+
+            lObj = []
+            rObj = []
+
+            for obj in objects:
+                if leftBox.intersect(obj):
+                    lObj.append(obj)
+
+                if rightBox.intersect(obj):
+                    rObj.append(obj)
+
+            cost = leftBox.surface_area() * len(lObj) + rightBox.surface_area() *len(rObj)
+
+            if cost < best_cost:
+                best_cost = cost
+                best_left_box = leftBox
+                best_right_box = rightBox
+                best_left_objects = lObj
+                best_right_objects = rObj
+
+        tree = KDtree(depth, box)
+
+        tree.left = KDtree.build(depth-1, best_left_box, best_left_objects)
+        tree.right = KDtree.build(depth-1, best_right_box, best_right_objects)
+
+        return tree
