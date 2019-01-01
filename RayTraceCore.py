@@ -73,13 +73,13 @@ def render_row(settings):
 def render(scene):
     row_list = []
 
-    width = 80
-    height = 40
+    width = 200
+    height = 100
 
 
     for y in range(0, height):
-        row_list.append(RowSettings(scene,width=width, height=height, row=y, ss = 3))
-    with Pool() as p:
+        row_list.append(RowSettings(scene,width=width, height=height, row=y, ss = 2))
+    with Pool(1) as p:
         img = list(tqdm(p.imap(render_row,row_list),total=height))
 
     img = sorted(img)

@@ -10,8 +10,6 @@ def parse(data):
     pl = []
     ps = set()
 
-    box = AABB()
-
     for row in data:
         if row:
             if row == "#fixoverlap":
@@ -32,14 +30,16 @@ def parse(data):
                 else:
                     scene.points.append(p)
             if r[0] == "f":
-                box.add(Triangle(scene.points[int(r[1]) - 1], scene.points[int(r[2]) - 1], scene.points[int(r[3]) - 1]))
+                scene.objects.append(Triangle(scene.points[int(r[1]) - 1], scene.points[int(r[2]) - 1], scene.points[int(r[3]) - 1]))
             if r[0] == "light":
                 scene.lights.append(Light(scene.points[int(r[1])-1],scene.points[int(r[2])-1]))
             if r[0] == "camera":
                 scene.camera = Camera(Point(scene.points[int(r[1])-1].pos,scene.points[int(r[2])-1].pos))
 
-    scene.objects.append(box)
-
     scene.calc_vertex_normals()
 
+
+
+
     return scene
+

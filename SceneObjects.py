@@ -3,6 +3,12 @@ from random import random, uniform
 from MathUtil import *
 from math import *
 
+from copy import deepcopy
+
+from OpenGL.GL import *
+from OpenGL.GLU import *
+
+
 
 class Hit:
     def __init__(self, obj, t):
@@ -125,6 +131,7 @@ class Ray:
                     intersection = self.intersect(obj)
 
                     if intersection is not False:
+
                         if intersection.t < tnear:
                             tnear = intersection.t
                             firstObj = intersection.obj
@@ -133,6 +140,37 @@ class Ray:
                     return Hit(firstObj, tnear)
 
             return False
+
+        elif isinstance(other, KDtree):
+            distL = self.intersect(other.left.box)
+            distR = self.intersect(other.right.box)
+
+
+
+            if distL is False and distR is False:
+                return False
+
+            if distL is False:
+                return self.intersect(other.right)
+
+            if distR is False:
+                return self.intersect(other.left)
+
+            if distL.t < distR.t:
+                hit = self.intersect(other.left)
+                if hit is not False:
+                    hit_point = self.after(hit.t)
+                    if other.left.box.intersect(hit_point):
+                        return hit
+                return self.intersect(other.right)
+
+            hit = self.intersect(other.right)
+            if hit is not False:
+                hit_point = self.after(hit.t)
+                if other.right.box.intersect(hit_point):
+                    return hit
+                return hit
+            return self.intersect(other.left)
 
     def intersect_uv(self, other):
         if isinstance(other, Triangle):
@@ -152,7 +190,7 @@ class Ray:
             return u, v
 
     def after(self, t):
-        return self.origin + self.direction * t
+                return self.origin + self.direction * t
 
 
 class Triangle():
@@ -232,6 +270,14 @@ class Scene:
         for point in self.points:
             point.normal.normalize()
 
+    def optimize_scene(self, method="KDTree", amount = 1):
+        if method == "KDTree":
+            box = AABB()
+
+            for obj in self.objects:
+                box.add(obj)
+
+            self.objects = [KDtree.build(amount, box, root=True)]
 
 class RowSettings:
     def __init__(self, scene, width=8, height=4, fov=30, row=0, ss=4):
@@ -297,22 +343,74 @@ class AAbox:
                     and other.c.pos.z < self.min_corner.z:
                 return False
 
-            if other.a.pos.x < self.max_corner.x \
-                    and other.b.pos.x < self.max_corner.x \
-                    and other.c.pos.x < self.max_corner.x:
+            if other.a.pos.x > self.max_corner.x \
+                    and other.b.pos.x > self.max_corner.x \
+                    and other.c.pos.x > self.max_corner.x:
                 return False
 
-            if other.a.pos.y < self.max_corner.y \
-                    and other.b.pos.y < self.max_corner.y \
-                    and other.c.pos.y < self.max_corner.y:
+            if other.a.pos.y > self.max_corner.y \
+                    and other.b.pos.y > self.max_corner.y \
+                    and other.c.pos.y > self.max_corner.y:
                 return False
 
-            if other.a.pos.z < self.max_corner.z \
-                    and other.b.pos.z < self.max_corner.z \
-                    and other.c.pos.z < self.max_corner.z:
+            if other.a.pos.z > self.max_corner.z \
+                    and other.b.pos.z > self.max_corner.z \
+                    and other.c.pos.z > self.max_corner.z:
                 return False
 
             return True
+
+        elif isinstance(other, Vec3):
+            if other.x < self.min_corner.x:
+                return False
+            if other.y < self.min_corner.y:
+                return False
+            if other.z < self.min_corner.z:
+                return False
+
+            if other.x > self.max_corner.x:
+                return False
+            if other.y > self.max_corner.y:
+                return False
+            if other.z > self.max_corner.z:
+                return False
+
+            return True
+
+
+    def draw_gl(self):
+        glPushAttrib(GL_POLYGON_MODE)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
+        glBegin(GL_QUADS)
+        glColor3f(1, 0.6, 0.4);
+        glVertex3f(self.min_corner.x, self.min_corner.y, self.min_corner.z)
+        glVertex3f(self.max_corner.x, self.min_corner.y, self.min_corner.z)
+        glVertex3f(self.max_corner.x, self.max_corner.y, self.min_corner.z)
+        glVertex3f(self.min_corner.x, self.max_corner.y, self.min_corner.z)
+
+        glVertex3f(self.min_corner.x, self.min_corner.y, self.max_corner.z)
+        glVertex3f(self.max_corner.x, self.min_corner.y, self.max_corner.z)
+        glVertex3f(self.max_corner.x, self.max_corner.y, self.max_corner.z)
+        glVertex3f(self.min_corner.x, self.max_corner.y, self.max_corner.z)
+
+        glEnd()
+
+        glPopAttrib()
+
+        glBegin(GL_LINES)
+        glVertex3f(self.min_corner.x, self.min_corner.y, self.min_corner.z)
+        glVertex3f(self.min_corner.x, self.min_corner.y, self.max_corner.z)
+
+        glVertex3f(self.max_corner.x, self.min_corner.y, self.min_corner.z)
+        glVertex3f(self.max_corner.x, self.min_corner.y, self.max_corner.z)
+
+        glVertex3f(self.max_corner.x, self.max_corner.y, self.min_corner.z)
+        glVertex3f(self.max_corner.x, self.max_corner.y, self.max_corner.z)
+
+        glVertex3f(self.min_corner.x, self.max_corner.y, self.min_corner.z)
+        glVertex3f(self.min_corner.x, self.max_corner.y, self.max_corner.z)
+
+        glEnd()
 
 
 class AABB:
@@ -336,6 +434,12 @@ class AABB:
         for shape in self.objects:
             shape.add_norm_to_vertices()
 
+    def draw_gl(self):
+        self.box.draw_gl()
+
+
+
+
 
 class KDtree:
     def __init__(self, depth, box):
@@ -343,8 +447,11 @@ class KDtree:
         self.box = box
 
     @staticmethod
-    def build(depth, box=None, objects=None):
-        if depth < 0 or len(objects) < 30:
+    def build(depth, box, objects = None, root = False):
+        if isinstance(box, AABB):
+             return KDtree.build(depth, box.box, box.objects, root)
+
+        if depth <= 0 or len(objects) < 30:
             return AABB(box, objects)
 
         best_cost = inf
@@ -353,11 +460,11 @@ class KDtree:
         for _ in range(16):
             cutLen = uniform(0, boxSize.x)
 
-            leftMax = box.max_corner
+            leftMax = deepcopy(box.max_corner)
             leftMax.x -= cutLen
 
-            rightMin = box.min_corner
-            rightMin.x += cutLen
+            rightMin = deepcopy(box.min_corner)
+            rightMin.x += boxSize.x - cutLen
 
             leftBox = AAbox(box.min_corner, leftMax)
             rightBox = AAbox(rightMin, box.max_corner)
@@ -366,7 +473,75 @@ class KDtree:
             rObj = []
 
             for obj in objects:
+                #print(obj)
                 if leftBox.intersect(obj):
+
+                    lObj.append(obj)
+
+                if rightBox.intersect(obj):
+                    rObj.append(obj)
+
+            cost = leftBox.surface_area() * len(lObj) + rightBox.surface_area() *len(rObj)
+
+            if cost < best_cost:
+                best_cost = cost
+                best_left_box = leftBox
+                best_right_box = rightBox
+                best_left_objects = lObj
+                best_right_objects = rObj
+
+        for _ in range(16):
+            cutLen = uniform(0, boxSize.y)
+
+            leftMax = deepcopy(box.max_corner)
+            leftMax.y -= cutLen
+
+            rightMin = deepcopy(box.min_corner)
+            rightMin.y += boxSize.y - cutLen
+
+            leftBox = AAbox(box.min_corner, leftMax)
+            rightBox = AAbox(rightMin, box.max_corner)
+
+            lObj = []
+            rObj = []
+
+            for obj in objects:
+                #print(obj)
+                if leftBox.intersect(obj):
+
+                    lObj.append(obj)
+
+                if rightBox.intersect(obj):
+                    rObj.append(obj)
+
+            cost = leftBox.surface_area() * len(lObj) + rightBox.surface_area() *len(rObj)
+
+            if cost < best_cost:
+                best_cost = cost
+                best_left_box = leftBox
+                best_right_box = rightBox
+                best_left_objects = lObj
+                best_right_objects = rObj
+
+        for _ in range(16):
+            cutLen = uniform(0, boxSize.z)
+
+            leftMax = deepcopy(box.max_corner)
+            leftMax.z -= cutLen
+
+            rightMin = deepcopy(box.min_corner)
+            rightMin.z += boxSize.z - cutLen
+
+            leftBox = AAbox(box.min_corner, leftMax)
+            rightBox = AAbox(rightMin, box.max_corner)
+
+            lObj = []
+            rObj = []
+
+            for obj in objects:
+                #print(obj)
+                if leftBox.intersect(obj):
+
                     lObj.append(obj)
 
                 if rightBox.intersect(obj):
@@ -386,4 +561,12 @@ class KDtree:
         tree.left = KDtree.build(depth-1, best_left_box, best_left_objects)
         tree.right = KDtree.build(depth-1, best_right_box, best_right_objects)
 
+        if root:
+            tree.objects = objects
+
         return tree
+
+    def draw_gl(self):
+        self.box.draw_gl()
+        self.left.draw_gl()
+        self.right.draw_gl()

@@ -8,16 +8,14 @@ from pygame.locals import *
 from objParser import parse
 from Shaders import *
 
-with open("lamp.obj", "r") as file:
-    scene = parse(file.read())
-    triangles = scene.triangles
-    lights = scene.lights
+from RayTraceCore import *
+
 
 
 
 def main():
     pygame.init()
-    display = (400, 200)
+    display = (800, 400)
     pygame.display.set_mode(display, DOUBLEBUF | OPENGL)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
     glEnable(GL_BLEND)
@@ -59,17 +57,38 @@ def main():
             glTranslatef(0.0, 0, 0.2)
 
         # glRotatef(1, 3, 1, 1)
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        glBegin(GL_TRIANGLES)
-        for triangle in triangles:
-            for point in triangle:
-                glColor4fv((*diffuse(point.normal,point.pos,lights[0].pos,triangle.properties.Kd), 1))
-                glVertex3fv(point.toList())
-        glEnd()
+
+        for obj in scene.objects:
+
+            if isinstance(obj, Triangle):
+
+                glBegin(GL_TRIANGLES)
+                for point in obj:
+                    glColor4fv((*diffuse(point.normal,point.pos,lights[0].pos,obj.properties.Kd), 1))
+                    glVertex3fv(point.toList())
+                glEnd()
+
+            if isinstance(obj,KDtree):
+                obj.draw_gl()
+                for objc in obj.objects:
+                    glBegin(GL_TRIANGLES)
+                    for point in objc:
+                        glColor4fv((*diffuse(point.normal, point.pos, lights[0].pos, objc.properties.Kd), 1))
+                        glVertex3fv(point.toList())
+                    glEnd()
 
         pygame.display.flip()
-        pygame.time.wait(100)
+        pygame.time.wait(10)
 
 
+if __name__ == "__main__":
+    with open("teapot.obj", "r") as file:
+        scene = parse(file.read())
+        objects = scene.objects
+        lights = scene.lights
+        scene.optimize_scene(amount=8)
 
-main()
+        render(scene)
+    main()
