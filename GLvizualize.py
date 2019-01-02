@@ -5,7 +5,7 @@ from OpenGL.GLU import *
 
 from pygame.locals import *
 
-from objParser import parse
+from objParser import parse_obj
 from Shaders import *
 
 from RayTraceCore import *
@@ -85,7 +85,7 @@ def main():
 
 if __name__ == "__main__":
     with open("teapot.obj", "r") as file:
-        scene = parse(file.read())
+        scene = parse_obj(file.read())
         objects = scene.objects
         lights = scene.lights
         scene.optimize_scene(amount=8)

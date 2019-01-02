@@ -244,8 +244,8 @@ class Triangle():
 
 class Light:
     def __init__(self, pos, color):
-        self.pos = pos.pos
-        self.color = color.pos
+        self.pos = pos
+        self.color = color
 
     def __str__(self):
         return f"Light<{self.pos} {self.color}>"
@@ -254,7 +254,6 @@ class Light:
 class Camera:
     def __init__(self, point):
         self.point = point
-
 
 class Scene:
     def __init__(self, triangles=[], points=[], lights=[], camera=None):

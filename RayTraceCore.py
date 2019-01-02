@@ -3,7 +3,6 @@
 # https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
 
 
-
 import numpy as np
 
 import matplotlib.pyplot as plt
@@ -18,7 +17,6 @@ from math import *
 from multiprocessing import Pool
 
 from random import random
-
 
 
 def trace(ray, tris, lights, depth):
@@ -40,20 +38,20 @@ def trace(ray, tris, lights, depth):
     col = Vec3(0.0)
 
     for light in lights:
-        if check_if_in_light(posHit,light,tris):
-            u,v = ray.intersect_uv(firstTri)
-            normal = firstTri.b.normal * u + firstTri.c.normal * v + firstTri.a.normal * (1-u-v)
-            if (ray.origin-posHit).dot(normal)<0:
+        if check_if_in_light(posHit, light, tris):
+            u, v = ray.intersect_uv(firstTri)
+            normal = firstTri.b.normal * u + firstTri.c.normal * v + firstTri.a.normal * (1 - u - v)
+            if (ray.origin - posHit).dot(normal) < 0:
                 normal = -normal
-            col += diffuse(normal,posHit,light.pos,firstTri.properties.Kd) * light.color
-            col += specular(normal,posHit,light.pos,ray.origin,firstTri.properties.Ks,firstTri.properties.Ns) *light.color
+            col += diffuse(normal, posHit, light.pos, firstTri.properties.Kd) * light.color
+            col += specular(normal, posHit, light.pos, ray.origin, firstTri.properties.Ks,
+                            firstTri.properties.Ns) * light.color
     return col
-
 
 
 def render_row(settings):
     y = settings.row
-    t = (y,[])
+    t = (y, [])
     for x in range(0, settings.width):
         col = Vec3()
         for _ in range(settings.ss):
@@ -73,14 +71,12 @@ def render_row(settings):
 def render(scene):
     row_list = []
 
-    width = 200
-    height = 100
-
+    width, height = scene.rendersize
 
     for y in range(0, height):
-        row_list.append(RowSettings(scene,width=width, height=height, row=y, ss = 2))
-    with Pool(1) as p:
-        img = list(tqdm(p.imap(render_row,row_list),total=height))
+        row_list.append(RowSettings(scene, width=width, height=height, row=y, ss=scene.ss))
+    with Pool() as p:
+        img = list(tqdm(p.imap(render_row, row_list), total=height))
 
     img = sorted(img)
 
