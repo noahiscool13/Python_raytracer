@@ -130,7 +130,7 @@ class Vec3:
 
     def __truediv__(self, other):
         if isinstance(other, numbers.Number):
-            return Vec3(self.x/other, self.y/other, self.z/other)
+            return Vec3(self.x / other, self.y / other, self.z / other)
         else:
             raise ValueError("Cant div by Vec3")
 

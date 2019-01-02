@@ -11,8 +11,6 @@ from Shaders import *
 from RayTraceCore import *
 
 
-
-
 def main():
     pygame.init()
     display = (800, 400)
@@ -66,11 +64,11 @@ def main():
 
                 glBegin(GL_TRIANGLES)
                 for point in obj:
-                    glColor4fv((*diffuse(point.normal,point.pos,lights[0].pos,obj.properties.Kd), 1))
+                    glColor4fv((*diffuse(point.normal, point.pos, lights[0].pos, obj.properties.Kd), 1))
                     glVertex3fv(point.toList())
                 glEnd()
 
-            if isinstance(obj,KDtree):
+            if isinstance(obj, KDtree):
                 obj.draw_gl()
                 for objc in obj.objects:
                     glBegin(GL_TRIANGLES)

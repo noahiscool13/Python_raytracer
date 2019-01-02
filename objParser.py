@@ -1,6 +1,7 @@
 from MathUtil import *
 from SceneObjects import *
 
+
 def parse_obj(data):
     data = data.splitlines()
     scene = Scene()
@@ -16,11 +17,11 @@ def parse_obj(data):
                 fixoverlap = True
             r = row.split()
             if r[0] == "v":
-                p = Point(Vec3(float(r[1]),float(r[2]),float(r[3])))
+                p = Point(Vec3(float(r[1]), float(r[2]), float(r[3])))
                 if fixoverlap:
                     if p in ps:
                         for n in scene.points:
-                            if n == p :
+                            if n == p:
                                 scene.points.append(n)
                                 break
                     else:
@@ -30,14 +31,13 @@ def parse_obj(data):
                 else:
                     scene.points.append(p)
             if r[0] == "f":
-                scene.objects.append(Triangle(scene.points[int(r[1]) - 1], scene.points[int(r[2]) - 1], scene.points[int(r[3]) - 1]))
+                scene.objects.append(
+                    Triangle(scene.points[int(r[1]) - 1], scene.points[int(r[2]) - 1], scene.points[int(r[3]) - 1]))
 
     scene.calc_vertex_normals()
 
-
-
-
     return scene
+
 
 def parse_senario(data, scene):
     data = data.splitlines()
@@ -49,10 +49,12 @@ def parse_senario(data, scene):
         if row:
             r = row.split()
             if r[0] == "point_light":
-                scene.lights.append(Light(Vec3(float(r[1]),float(r[2]),float(r[3])), Vec3(float(r[4]),float(r[5]),float(r[6]))))
+                scene.lights.append(
+                    Light(Vec3(float(r[1]), float(r[2]), float(r[3])), Vec3(float(r[4]), float(r[5]), float(r[6]))))
             if r[0] == "camera":
-                scene.camera = Camera(Point(Vec3(float(r[1]),float(r[2]),float(r[3])), Vec3(float(r[4]),float(r[5]),float(r[6]))))
+                scene.camera = Camera(
+                    Point(Vec3(float(r[1]), float(r[2]), float(r[3])), Vec3(float(r[4]), float(r[5]), float(r[6]))))
             if r[0] == "render_size":
-                scene.rendersize = (int(r[1]),int(r[2]))
+                scene.rendersize = (int(r[1]), int(r[2]))
             if r[0] == "ss":
                 scene.ss = int(r[1])

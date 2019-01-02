@@ -9,7 +9,6 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 
 
-
 class Hit:
     def __init__(self, obj, t):
         self.obj = obj
@@ -145,8 +144,6 @@ class Ray:
             distL = self.intersect(other.left.box)
             distR = self.intersect(other.right.box)
 
-
-
             if distL is False and distR is False:
                 return False
 
@@ -190,7 +187,7 @@ class Ray:
             return u, v
 
     def after(self, t):
-                return self.origin + self.direction * t
+        return self.origin + self.direction * t
 
 
 class Triangle():
@@ -255,6 +252,7 @@ class Camera:
     def __init__(self, point):
         self.point = point
 
+
 class Scene:
     def __init__(self, triangles=[], points=[], lights=[], camera=None):
         self.objects = triangles
@@ -269,7 +267,7 @@ class Scene:
         for point in self.points:
             point.normal.normalize()
 
-    def optimize_scene(self, method="KDTree", amount = 1):
+    def optimize_scene(self, method="KDTree", amount=1):
         if method == "KDTree":
             box = AABB()
 
@@ -277,6 +275,7 @@ class Scene:
                 box.add(obj)
 
             self.objects = [KDtree.build(amount, box, root=True)]
+
 
 class RowSettings:
     def __init__(self, scene, width=8, height=4, fov=30, row=0, ss=4):
@@ -306,9 +305,9 @@ class AAbox:
 
     def surface_area(self):
         size = self.size()
-        surfaceTop = size.x*size.z
-        surfaceFront = size.x*size.y
-        surfaceSide = size.y*size.z
+        surfaceTop = size.x * size.z
+        surfaceFront = size.x * size.y
+        surfaceSide = size.y * size.z
         return 2 * (surfaceTop + surfaceFront + surfaceSide)
 
     def extend(self, box):
@@ -376,7 +375,6 @@ class AAbox:
 
             return True
 
-
     def draw_gl(self):
         glPushAttrib(GL_POLYGON_MODE)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
@@ -437,18 +435,15 @@ class AABB:
         self.box.draw_gl()
 
 
-
-
-
 class KDtree:
     def __init__(self, depth, box):
         self.depth = depth
         self.box = box
 
     @staticmethod
-    def build(depth, box, objects = None, root = False):
+    def build(depth, box, objects=None, root=False):
         if isinstance(box, AABB):
-             return KDtree.build(depth, box.box, box.objects, root)
+            return KDtree.build(depth, box.box, box.objects, root)
 
         if depth <= 0 or len(objects) < 30:
             return AABB(box, objects)
@@ -472,15 +467,14 @@ class KDtree:
             rObj = []
 
             for obj in objects:
-                #print(obj)
+                # print(obj)
                 if leftBox.intersect(obj):
-
                     lObj.append(obj)
 
                 if rightBox.intersect(obj):
                     rObj.append(obj)
 
-            cost = leftBox.surface_area() * len(lObj) + rightBox.surface_area() *len(rObj)
+            cost = leftBox.surface_area() * len(lObj) + rightBox.surface_area() * len(rObj)
 
             if cost < best_cost:
                 best_cost = cost
@@ -505,15 +499,14 @@ class KDtree:
             rObj = []
 
             for obj in objects:
-                #print(obj)
+                # print(obj)
                 if leftBox.intersect(obj):
-
                     lObj.append(obj)
 
                 if rightBox.intersect(obj):
                     rObj.append(obj)
 
-            cost = leftBox.surface_area() * len(lObj) + rightBox.surface_area() *len(rObj)
+            cost = leftBox.surface_area() * len(lObj) + rightBox.surface_area() * len(rObj)
 
             if cost < best_cost:
                 best_cost = cost
@@ -538,15 +531,14 @@ class KDtree:
             rObj = []
 
             for obj in objects:
-                #print(obj)
+                # print(obj)
                 if leftBox.intersect(obj):
-
                     lObj.append(obj)
 
                 if rightBox.intersect(obj):
                     rObj.append(obj)
 
-            cost = leftBox.surface_area() * len(lObj) + rightBox.surface_area() *len(rObj)
+            cost = leftBox.surface_area() * len(lObj) + rightBox.surface_area() * len(rObj)
 
             if cost < best_cost:
                 best_cost = cost
@@ -557,8 +549,8 @@ class KDtree:
 
         tree = KDtree(depth, box)
 
-        tree.left = KDtree.build(depth-1, best_left_box, best_left_objects)
-        tree.right = KDtree.build(depth-1, best_right_box, best_right_objects)
+        tree.left = KDtree.build(depth - 1, best_left_box, best_left_objects)
+        tree.right = KDtree.build(depth - 1, best_right_box, best_right_objects)
 
         if root:
             tree.objects = objects
