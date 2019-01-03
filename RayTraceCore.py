@@ -33,19 +33,22 @@ def trace(ray, tris, lights, depth):
     if not firstTri:
         return Vec3(0.0)
 
-    posHit = ray.after(tnear)
+    posHit = ray.after(tnear-EPSILON)
 
     col = Vec3(0.0)
 
     for light in lights:
         if check_if_in_light(posHit, light, tris):
-            u, v = ray.intersect_uv(firstTri)
-            normal = firstTri.b.normal * u + firstTri.c.normal * v + firstTri.a.normal * (1 - u - v)
-            if (ray.origin - posHit).dot(normal) < 0:
-                normal = -normal
-            col += diffuse(normal, posHit, light.pos, firstTri.properties.Kd) * light.color
-            col += specular(normal, posHit, light.pos, ray.origin, firstTri.properties.Ks,
-                            firstTri.properties.Ns) * light.color
+            if firstTri.material.smoothNormal:
+                u, v = ray.intersect_uv(firstTri)
+                normal = firstTri.b.normal * u + firstTri.c.normal * v + firstTri.a.normal * (1 - u - v)
+                if (ray.origin - posHit).dot(normal) < 0:
+                    normal = -normal
+            else:
+                normal = firstTri.normal()
+
+            col += diffuse(normal, posHit, light.pos, firstTri.material) * light.color
+            col += specular(normal, posHit, light.pos, ray.origin, firstTri.material) * light.color
     return col
 
 

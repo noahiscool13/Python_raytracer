@@ -15,8 +15,8 @@ class Hit:
         self.t = t
 
 
-class Properties:
-    def __init__(self, Kd=Vec3(0.4), Ks=Vec3(0.6), Ns=2, smoothNormal=True):
+class Material:
+    def __init__(self, Kd=Vec3(0.4), Ks=Vec3(0.6), Ns=2, smoothNormal=False):
         self.Kd = Kd
         self.Ks = Ks
         self.Ns = Ns
@@ -191,11 +191,11 @@ class Ray:
 
 
 class Triangle():
-    def __init__(self, a, b, c, properties=Properties()):
+    def __init__(self, a, b, c, material=Material()):
         self.a = a
         self.b = b
         self.c = c
-        self.properties = properties
+        self.material = material
 
     def add_norm_to_vertices(self):
         norm = self.un_normalized_normal()

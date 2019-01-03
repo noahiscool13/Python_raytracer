@@ -5,7 +5,7 @@ from OpenGL.GLU import *
 
 from pygame.locals import *
 
-from objParser import parse_obj
+from objParser import parse_obj, parse_senario
 from Shaders import *
 
 from RayTraceCore import *
@@ -59,12 +59,14 @@ def main():
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         for obj in scene.objects:
-
             if isinstance(obj, Triangle):
 
                 glBegin(GL_TRIANGLES)
                 for point in obj:
-                    glColor4fv((*diffuse(point.normal, point.pos, lights[0].pos, obj.properties.Kd), 1))
+                    if obj.material.smoothNormal:
+                        glColor4fv((*diffuse(point.normal, point.pos, lights[0].pos, obj.material), 1))
+                    else:
+                        glColor4fv((*diffuse(obj.normal(), point.pos, lights[0].pos, obj.material), 1))
                     glVertex3fv(point.toList())
                 glEnd()
 
@@ -73,7 +75,22 @@ def main():
                 for objc in obj.objects:
                     glBegin(GL_TRIANGLES)
                     for point in objc:
-                        glColor4fv((*diffuse(point.normal, point.pos, lights[0].pos, objc.properties.Kd), 1))
+                        if obj.material.smoothNormal:
+                            glColor4fv((*diffuse(point.normal, point.pos, lights[0].pos, obj.material), 1))
+                        else:
+                            glColor4fv((*diffuse(obj.normal(), point.pos, lights[0].pos, obj.material), 1))
+                        glVertex3fv(point.toList())
+                    glEnd()
+
+            if isinstance(obj, AABB):
+                obj.draw_gl()
+                for objc in obj.objects:
+                    glBegin(GL_TRIANGLES)
+                    for point in objc:
+                        if obj.material.smoothNormal:
+                            glColor4fv((*diffuse(point.normal, point.pos, lights[0].pos, obj.material), 1))
+                        else:
+                            glColor4fv((*diffuse(obj.normal(), point.pos, lights[0].pos, obj.material), 1))
                         glVertex3fv(point.toList())
                     glEnd()
 
@@ -82,11 +99,13 @@ def main():
 
 
 if __name__ == "__main__":
-    with open("teapot.obj", "r") as file:
+    with open("monte-carlo.obj", "r") as file:
         scene = parse_obj(file.read())
-        objects = scene.objects
-        lights = scene.lights
-        scene.optimize_scene(amount=8)
+    with open("teapot.senario") as file:
+        parse_senario(file.read(), scene)
+    objects = scene.objects
+    lights = scene.lights
+    #scene.optimize_scene(amount=8)
 
-        render(scene)
+        #render(scene)
     main()

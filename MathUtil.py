@@ -16,6 +16,11 @@ class Vec2:
         if xx is None:
             self.x = 0
             self.y = 0
+
+        elif isinstance(xx, Vec2):
+            self.x = xx.x
+            self.y = xx.y
+
         elif yy is None:
             self.x = xx
             self.y = xx
@@ -31,7 +36,9 @@ class Vec2:
 
     def unit(self):
         length = self.length()
-        return Vec3(self.x / length, self.y / length)
+        if length > 0:
+            return Vec3(self.x / length, self.y / length)
+        return self
 
     def __mul__(self, other):
         if isinstance(other, numbers.Number):
@@ -78,6 +85,12 @@ class Vec3:
             self.x = 0
             self.y = 0
             self.z = 0
+
+        elif isinstance(xx, Vec3):
+            self.x = xx.x
+            self.y = xx.y
+            self.z = xx.z
+
         elif yy is None:
             self.x = xx
             self.y = xx
@@ -96,7 +109,9 @@ class Vec3:
 
     def unit(self):
         length = self.length()
-        return Vec3(self.x / length, self.y / length, self.z / length)
+        if length > 0:
+            return Vec3(self.x / length, self.y / length, self.z / length)
+        return Vec3(self)
 
     def __mul__(self, other):
         if isinstance(other, numbers.Number):
