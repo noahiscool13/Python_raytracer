@@ -39,40 +39,23 @@ def parse_obj(data):
 
             if r[0] == "f":
 
-                ps = r[1].split("/")
-                p1 = scene.points[int(ps[0]) - 1]
+                face_points = []
 
-                if len(ps) > 1:
-                    pass
+                for p in range(1,len(r)):
+                    ps = r[p].split("/")
+                    face_points.append(scene.points[int(ps[0]) - 1])
 
-                if len(ps) > 2:
-                    pass
-                    #p1.normal = vertex_normals[int(ps[2])-1]
+                    if len(ps) > 1:
+                        pass
 
-                ps = r[2].split("/")
-                p2 = scene.points[int(ps[0]) - 1]
+                    if len(ps) > 2:
+                        pass
+                        #p1.normal = vertex_normals[int(ps[2])-1]
 
-                if len(ps) > 1:
-                    pass
-
-                if len(ps) > 2:
-                    pass
-                    #p2.normal = vertex_normals[int(ps[2])-1]
-
-                ps = r[3].split("/")
-                p3 = scene.points[int(ps[0]) - 1]
-
-                if len(ps) > 1:
-                    pass
-
-                if len(ps) > 2:
-                    pass
-                    #p3.normal = vertex_normals[int(ps[2])-1]
-
-
-                scene.objects.append(
-                    Triangle(p1, p2, p3)
-                )
+                for p in range(len(face_points)-2):
+                    scene.objects.append(
+                        Triangle(face_points[0], face_points[p+1], face_points[p+2])
+                    )
 
     scene.calc_vertex_normals()
 
