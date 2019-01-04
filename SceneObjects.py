@@ -264,9 +264,16 @@ class Triangle():
 
 
 class Light:
-    def __init__(self, pos, color):
+    def __init__(self, pos, color, softness=0.1):
+        self.true_pos = pos
         self.pos = pos
         self.color = color
+        self.softness = softness
+
+    def random_translate(self):
+        self.pos = self.true_pos + Vec3((random()-0.5)*self.softness,
+                                        (random()-0.5)*self.softness,
+                                        (random()-0.5)*self.softness)
 
     def __str__(self):
         return f"Light<{self.pos} {self.color}>"

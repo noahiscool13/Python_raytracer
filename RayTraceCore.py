@@ -35,6 +35,7 @@ def trace(ray, scene, depth):
     direct_light += ambiant(hit_object.material, scene)
 
     for light in scene.lights:
+        light.random_translate()
         if check_if_in_light(posHit, light, hit_object, scene.objects):
             if hit_object.material.smoothNormal:
                 u, v = ray.intersect_uv(hit_object)

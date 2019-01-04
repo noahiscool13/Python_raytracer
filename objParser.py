@@ -126,8 +126,13 @@ def parse_senario(data, scene):
         if row:
             r = row.split()
             if r[0] == "point_light":
-                scene.lights.append(
-                    Light(Vec3(float(r[1]), float(r[2]), float(r[3])), Vec3(float(r[4]), float(r[5]), float(r[6]))))
+                if len(r) > 7:
+                    scene.lights.append(
+                        Light(Vec3(float(r[1]), float(r[2]), float(r[3])), Vec3(float(r[4]), float(r[5]), float(r[6])), float(r[7])))
+                else:
+                    scene.lights.append(
+                        Light(Vec3(float(r[1]), float(r[2]), float(r[3])), Vec3(float(r[4]), float(r[5]), float(r[6]))))
+
             if r[0] == "camera":
                 scene.camera = Camera(
                     Point(Vec3(float(r[1]), float(r[2]), float(r[3])), Vec3(float(r[4]), float(r[5]), float(r[6]))))
