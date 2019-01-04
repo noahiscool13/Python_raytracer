@@ -81,3 +81,49 @@ def parse_senario(data, scene):
                 scene.rendersize = (int(r[1]), int(r[2]))
             if r[0] == "ss":
                 scene.ss = int(r[1])
+
+
+def parce_mtl(data, scene):
+    data = data.splitlines()
+
+    scene.materials = {}
+
+    mtl = Material()
+    mtl_name = "default"
+
+    for line in data:
+        if line:
+            l = line.split()
+
+            if l[0] == "newmtl":
+                scene.materials[mtl_name] = mtl
+
+                mtl = Material()
+
+                mtl_name = l[1]
+
+            elif l[0] == "Ns":
+                mtl.Ns = float(l[1])
+
+            elif l[0] == "Ka":
+                mtl.Ka = Vec3(float(l[1]), float(l[2]), float(l[3]))
+
+            elif l[0] == "Kd":
+                mtl.Kd = Vec3(float(l[1]), float(l[2]), float(l[3]))
+
+            elif l[0] == "Ks":
+                mtl.Ks = Vec3(float(l[1]), float(l[2]), float(l[3]))
+
+            elif l[0] == "Ke":
+                mtl.Ke = Vec3(float(l[1]), float(l[2]), float(l[3]))
+
+            elif l[0] == "Ni":
+                mtl.Ni = float(l[1])
+
+            elif l[0] == "d":
+                mtl.d = float(l[1])
+
+    scene.materials[mtl_name] = mtl
+
+
+
