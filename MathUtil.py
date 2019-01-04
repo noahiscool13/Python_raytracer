@@ -1,5 +1,6 @@
 import numbers
-from math import sqrt
+from math import sqrt, pi, acos, sin, cos
+from random import random
 
 EPSILON = 0.00001
 
@@ -159,6 +160,48 @@ class Vec3:
         return Vec3(self.y * other.z - other.y * self.z,
                     self.z * other.x - other.z * self.x,
                     self.x * other.y - other.x * self.y)
+
+    def rotate(self, rotation):
+        if abs(rotation.x) > rotation.y:
+            Nt = Vec3(rotation.z,0,-rotation.x) / sqrt(rotation.x**2 + rotation.z**2)
+        else:
+            Nt = Vec3(0,-rotation.z, rotation.y) / sqrt(rotation.y**2 + rotation.z**2)
+
+        Nb = rotation.cross_product(Nt)
+
+        x = self.x * Nb.x + self.y * rotation.x + self.z * Nt.x
+        y = self.x * Nb.y + self.y * rotation.y + self.z * Nt.y
+        z = self.x * Nb.z + self.y * rotation.z + self.z * Nt.z
+
+        self.x = x
+        self.y = y
+        self.z = z
+
+        self.normalize()
+
+    def rotated(self, rotation):
+        if abs(rotation.x) > rotation.y:
+            Nt = Vec3(rotation.z,0,-rotation.x) / sqrt(rotation.x**2 + rotation.z**2)
+        else:
+            Nt = Vec3(0,-rotation.z, rotation.y) / sqrt(rotation.y**2 + rotation.z**2)
+
+        Nb = rotation.cross_product(Nt)
+
+        x = self.x * Nb.x + self.y * rotation.x + self.z * Nt.x
+        y = self.x * Nb.y + self.y * rotation.y + self.z * Nt.y
+        z = self.x * Nb.z + self.y * rotation.z + self.z * Nt.z
+
+        return Vec3(x, y, z)
+
+    @staticmethod
+    def point_on_hemisphere(normal = None):
+        theta = random()*2*pi
+        phi = acos(1-2*random())
+
+        if not normal:
+            return Vec3(sin(phi)*cos(theta), abs(sin(phi) * sin(theta)), cos(phi))
+
+        return Vec3.point_on_hemisphere().rotated(normal)
 
     def __rmul__(self, other):
         return self * other

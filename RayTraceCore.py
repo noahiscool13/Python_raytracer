@@ -29,7 +29,10 @@ def trace(ray, scene, depth):
 
     posHit = ray.after(hit.t-EPSILON)
 
-    col = Vec3(0.0)
+    direct_light = Vec3(0.0)
+
+    direct_light += emittance(hit_object.material)
+    direct_light += ambiant(hit_object.material, scene)
 
     for light in scene.lights:
         if check_if_in_light(posHit, light, hit_object, scene.objects):
@@ -41,11 +44,11 @@ def trace(ray, scene, depth):
             else:
                 normal = hit_object.normal()
 
-            col += diffuse(normal, posHit, light.pos, hit_object.material) * light.color
-            col += specular(normal, posHit, light.pos, ray.origin, hit_object.material) * light.color
-            col += emittance(hit_object.material)
-            col += ambiant(hit_object.material,scene)
-    return col
+            direct_light += diffuse(normal, posHit, light.pos, hit_object.material) * light.color
+            direct_light += specular(normal, posHit, light.pos, ray.origin, hit_object.material) * light.color
+
+
+    return direct_light
 
 
 def render_row(settings):
