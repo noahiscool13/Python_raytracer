@@ -47,10 +47,30 @@ class Ray:
         self.direction = direction
 
     def intersect(self, other):
+        if isinstance(other, Scene):
+            tnear = inf
+            firstTri = None
+            for tri in other.objects:
+                intersection = self.intersect(tri)
+
+                if intersection is not False:
+                    if intersection.t < tnear:
+                        tnear = intersection.t
+                        firstTri = intersection.obj
+
+            if not firstTri:
+                return False
+
+            return Hit(firstTri, tnear)
+
         if isinstance(other, Triangle):
 
-            edge1 = other.b.pos - other.a.pos
-            edge2 = other.c.pos - other.a.pos
+            tv0 = other.a.pos
+            tv1 = other.b.pos
+            tv2 = other.c.pos
+
+            edge1 = tv1 - tv0
+            edge2 = tv2 - tv0
 
             h = self.direction.cross_product(edge2)
             a = edge1.dot(h)
@@ -59,7 +79,7 @@ class Ray:
                 return False
 
             f = 1.0 / a
-            s = self.origin - other.a.pos
+            s = self.origin - tv0
             u = f * (s.dot(h))
 
             if u < 0 or u > 1:

@@ -16,15 +16,16 @@ def specular(normal, posHit, lightPos, cameraPos, material):
     return spec ** material.Ns * material.Ks
 
 
-def check_if_in_light(pos, light, triangles):
+def check_if_in_light(pos, light, triangle, triangles):
     direction = (light.pos - pos)
     target_dist = direction.length()
     direction.normalize()
 
     ray = Ray(light.pos, direction)
 
-    for triangle in triangles:
-        dist = ray.intersect(triangle)
-        if dist > EPSILON and abs(dist - target_dist) < EPSILON:
-            return False
+    for tri in triangles:
+        dist = ray.intersect(tri)
+        if dist:
+            if dist.obj != triangle:
+                return False
     return True

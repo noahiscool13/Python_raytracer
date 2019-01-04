@@ -19,36 +19,30 @@ from multiprocessing import Pool
 from random import random
 
 
-def trace(ray, tris, lights, depth):
-    tnear = inf
-    firstTri = None
-    for tri in tris:
-        intersection = ray.intersect(tri)
+def trace(ray, scene, depth):
+    hit = ray.intersect(scene)
 
-        if intersection is not False:
-            if intersection.t < tnear:
-                tnear = intersection.t
-                firstTri = intersection.obj
-
-    if not firstTri:
+    if not hit:
         return Vec3(0.0)
 
-    posHit = ray.after(tnear-EPSILON)
+    hit_object, hit_t = hit.obj, hit.t
+
+    posHit = ray.after(hit.t-EPSILON)
 
     col = Vec3(0.0)
 
-    for light in lights:
-        if check_if_in_light(posHit, light, tris):
-            if firstTri.material.smoothNormal:
-                u, v = ray.intersect_uv(firstTri)
-                normal = firstTri.b.normal * u + firstTri.c.normal * v + firstTri.a.normal * (1 - u - v)
+    for light in scene.lights:
+        if check_if_in_light(posHit, light, hit_object, scene.objects):
+            if hit_object.material.smoothNormal:
+                u, v = ray.intersect_uv(hit_object)
+                normal = hit_object.b.normal * u + hit_object.c.normal * v + hit_object.a.normal * (1 - u - v)
                 if (ray.origin - posHit).dot(normal) < 0:
                     normal = -normal
             else:
-                normal = firstTri.normal()
+                normal = hit_object.normal()
 
-            col += diffuse(normal, posHit, light.pos, firstTri.material) * light.color
-            col += specular(normal, posHit, light.pos, ray.origin, firstTri.material) * light.color
+            col += diffuse(normal, posHit, light.pos, hit_object.material) * light.color
+            col += specular(normal, posHit, light.pos, ray.origin, hit_object.material) * light.color
     return col
 
 
@@ -65,7 +59,7 @@ def render_row(settings):
             raydir = Vec3(xx, yy, -1)
             raydir.normalize()
             ray = Ray(settings.scene.camera.point.pos, raydir)
-            col += trace(ray, settings.scene.objects, settings.scene.lights, 1)
+            col += trace(ray, settings.scene, 1)
         col /= settings.ss
         t[1].append(clip(col.toList()))
     return t
