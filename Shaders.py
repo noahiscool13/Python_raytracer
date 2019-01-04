@@ -3,6 +3,11 @@ from math import *
 from MathUtil import *
 from SceneObjects import *
 
+def ambiant(material, scene):
+    return material.Ka * scene.ambiant_light
+
+def emittance(material):
+    return material.Ke
 
 def diffuse(normal, posHit, lightPos, material):
     lightDirection = (lightPos - posHit).unit()
@@ -18,7 +23,6 @@ def specular(normal, posHit, lightPos, cameraPos, material):
 
 def check_if_in_light(pos, light, triangle, triangles):
     direction = (light.pos - pos)
-    target_dist = direction.length()
     direction.normalize()
 
     ray = Ray(light.pos, direction)

@@ -16,9 +16,13 @@ class Hit:
 
 
 class Material:
-    def __init__(self, Kd=Vec3(0.4), Ks=Vec3(0.6), Ns=2, smoothNormal=False):
+    def __init__(self, Ka = Vec3(0.2), Kd=Vec3(), Ks=Vec3(), Ke  = Vec3(), Ni = 1, d = 1, Ns=2, smoothNormal=False):
+        self.Ka = Ka
         self.Kd = Kd
         self.Ks = Ks
+        self.Ke = Ke
+        self.Ni = Ni
+        self.d = d
         self.Ns = Ns
         self.smoothNormal = smoothNormal
 
@@ -274,11 +278,12 @@ class Camera:
 
 
 class Scene:
-    def __init__(self, triangles=[], points=[], lights=[], camera=None):
+    def __init__(self, triangles=[], points=[], lights=[], camera=None, ambiant_light = Vec3(1)):
         self.objects = triangles
         self.lights = lights
         self.camera = camera
         self.points = points
+        self.ambiant_light = ambiant_light
 
     def calc_vertex_normals(self):
         for shape in self.objects:

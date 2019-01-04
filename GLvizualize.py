@@ -13,7 +13,7 @@ from RayTraceCore import *
 
 def main():
     pygame.init()
-    display = (800, 400)
+    display = (800, 800)
     pygame.display.set_mode(display, DOUBLEBUF | OPENGL)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
     glEnable(GL_BLEND)
@@ -101,7 +101,7 @@ def main():
 if __name__ == "__main__":
     with open("monte-carlo.obj", "r") as file:
         scene = parse_obj(file.read())
-    with open("teapot.senario") as file:
+    with open("monte-carlo.senario") as file:
         parse_senario(file.read(), scene)
     objects = scene.objects
     lights = scene.lights

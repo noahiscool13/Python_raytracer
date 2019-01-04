@@ -43,6 +43,8 @@ def trace(ray, scene, depth):
 
             col += diffuse(normal, posHit, light.pos, hit_object.material) * light.color
             col += specular(normal, posHit, light.pos, ray.origin, hit_object.material) * light.color
+            col += emittance(hit_object.material)
+            col += ambiant(hit_object.material,scene)
     return col
 
 
@@ -80,6 +82,6 @@ def render(scene):
     a = []
     for row in img:
         a.append(row[1])
-    print(a)
+    #print(a)
     plt.imshow(a)
     plt.show()
