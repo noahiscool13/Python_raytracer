@@ -5,7 +5,7 @@ from random import random
 EPSILON = 0.00001
 
 
-def clip(val, lower=0, upper=1):
+def clip(val, lower=0.0, upper=1.0):
     if isinstance(val, list):
         return [clip(v, lower, upper) for v in val]
     return max(lower, min(upper, val))
@@ -180,7 +180,7 @@ class Vec3:
         self.normalize()
 
     def rotated(self, rotation):
-        if abs(rotation.x) > rotation.y:
+        if abs(rotation.x) > abs(rotation.y):
             Nt = Vec3(rotation.z,0,-rotation.x) / sqrt(rotation.x**2 + rotation.z**2)
         else:
             Nt = Vec3(0,-rotation.z, rotation.y) / sqrt(rotation.y**2 + rotation.z**2)

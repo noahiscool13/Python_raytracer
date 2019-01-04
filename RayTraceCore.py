@@ -29,6 +29,14 @@ def trace(ray, scene, depth):
 
     posHit = ray.after(hit.t-EPSILON)
 
+    if hit_object.material.smoothNormal:
+        u, v = ray.intersect_uv(hit_object)
+        normal = hit_object.b.normal * u + hit_object.c.normal * v + hit_object.a.normal * (1 - u - v)
+        if (ray.origin - posHit).dot(normal) < 0:
+            normal = -normal
+    else:
+        normal = hit_object.normal()
+
     direct_light = Vec3(0.0)
 
     direct_light += emittance(hit_object.material)
@@ -37,19 +45,29 @@ def trace(ray, scene, depth):
     for light in scene.lights:
         light.random_translate()
         if check_if_in_light(posHit, light, hit_object, scene.objects):
-            if hit_object.material.smoothNormal:
-                u, v = ray.intersect_uv(hit_object)
-                normal = hit_object.b.normal * u + hit_object.c.normal * v + hit_object.a.normal * (1 - u - v)
-                if (ray.origin - posHit).dot(normal) < 0:
-                    normal = -normal
-            else:
-                normal = hit_object.normal()
-
             direct_light += diffuse(normal, posHit, light.pos, hit_object.material) * light.color
             direct_light += specular(normal, posHit, light.pos, ray.origin, hit_object.material) * light.color
 
+    indirect_light = Vec3(0.0)
 
-    return direct_light
+    if depth > 0:
+        bounce_direction = Vec3.point_on_hemisphere(normal)
+
+        bounce_ray = Ray(posHit, bounce_direction)
+
+        bounce_hit = bounce_ray.intersect(scene)
+
+        if bounce_hit:
+
+            bounce_hit_pos = bounce_ray.after(bounce_hit.t-EPSILON)
+
+            bounce_light = trace(bounce_ray,scene, depth - 1)
+
+            indirect_light += diffuse(normal, posHit, bounce_hit_pos, hit_object.material) * bounce_light
+
+    # print(indirect_light)
+
+    return direct_light + indirect_light
 
 
 def render_row(settings):
@@ -65,7 +83,7 @@ def render_row(settings):
             raydir = Vec3(xx, yy, -1)
             raydir.normalize()
             ray = Ray(settings.scene.camera.point.pos, raydir)
-            col += trace(ray, settings.scene, 1)
+            col += trace(ray, settings.scene, 3)
         col /= settings.ss
         t[1].append(clip(col.toList()))
     return t
@@ -86,6 +104,6 @@ def render(scene):
     a = []
     for row in img:
         a.append(row[1])
-    #print(a)
+    print(a)
     plt.imshow(a)
     plt.show()
