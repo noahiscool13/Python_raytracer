@@ -90,13 +90,16 @@ def render_row(settings):
     return t
 
 
-def render(scene):
+def render(scene, progresive = False):
     row_list = []
 
     width, height = scene.rendersize
 
     for y in range(0, height):
-        row_list.append(RowSettings(scene, width=width, height=height, row=y, ss=scene.ss))
+        if progresive:
+            row_list.append(RowSettings(scene, width=width, height=height, row=y, ss=1))
+        else:
+            row_list.append(RowSettings(scene, width=width, height=height, row=y, ss=scene.ss))
     with Pool() as p:
         img = list(tqdm(p.imap(render_row, row_list), total=height))
 
@@ -106,17 +109,19 @@ def render(scene):
     for row in img:
         a.append(row[1])
 
+    if not progresive:
+        a = clip(a)
+
     # plt.imshow(a)
     # plt.show()
 
     return a
 
-def progressive_render(scene):
-    img = render(scene)
+def progressive_render(scene, batch):
+    img = render(scene, progresive=True)
 
-    #for cycle in range(scene.ss-1):
-    for cycle in range(20):
-        img = blend([img,render(scene)],[1,1/(cycle+2)])
+    for cycle in tqdm(range(scene.ss-1)):
+        img = blend([img,render(scene, progresive=True)],[1,1/(cycle+2)])
 
     img = clip(img)
 

@@ -10,5 +10,5 @@ if __name__ == '__main__':
     triangles = scene.objects
     lights = scene.lights
     camera = scene.camera
-
-    progressive_render(scene)
+    render(scene)
+    #progressive_render(scene)
