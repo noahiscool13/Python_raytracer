@@ -6,6 +6,7 @@
 import numpy as np
 
 import matplotlib.pyplot as plt
+from PIL import Image
 from tqdm import tqdm
 
 from PostProcessing import blend
@@ -118,11 +119,13 @@ def render(scene, progresive = False):
     return a
 
 
-def progressive_render(scene, batch=1):
+def progressive_render(scene, batch=1, file = None):
     img = render(scene, progresive=True)
 
     for cycle in tqdm(range(scene.ss-1)):
         img = blend([img,render(scene, progresive=True)],[1,1/(cycle+2)])
+        if file:
+            save_img(clip(img), file)
 
     img = clip(img)
 
@@ -135,3 +138,7 @@ def progressive_render(scene, batch=1):
 def show_img(img):
     plt.imshow(img)
     plt.show()
+
+def save_img(img, file):
+    image = Image.fromarray((np.array(img)*255).astype('uint8'),"RGB")
+    image.save(file,"PNG")

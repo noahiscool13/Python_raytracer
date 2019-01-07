@@ -13,3 +13,4 @@ if __name__ == '__main__':
     #render(scene)
     img = progressive_render(scene)
     show_img(img)
+    save_img(img,"testRender.png")
