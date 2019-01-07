@@ -117,7 +117,8 @@ def render(scene, progresive = False):
 
     return a
 
-def progressive_render(scene, batch):
+
+def progressive_render(scene, batch=1):
     img = render(scene, progresive=True)
 
     for cycle in tqdm(range(scene.ss-1)):
@@ -125,6 +126,12 @@ def progressive_render(scene, batch):
 
     img = clip(img)
 
+    return img
+
+    # plt.imshow(img)
+    # plt.show()
+
+
+def show_img(img):
     plt.imshow(img)
     plt.show()
-
