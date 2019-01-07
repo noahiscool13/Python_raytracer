@@ -11,6 +11,6 @@ if __name__ == '__main__':
     lights = scene.lights
     camera = scene.camera
     #render(scene)
-    img = progressive_render(scene)
+    img = progressive_render(scene,batch=5, file="testRender.png")
     show_img(img)
     save_img(img,"testRender.png")

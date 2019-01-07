@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from PIL import Image
 from tqdm import tqdm
 
-from PostProcessing import blend
+from PostProcessing import blend, blur
 from Shaders import *
 from MathUtil import *
 from SceneObjects import *
@@ -69,7 +69,7 @@ def trace(ray, scene, depth):
 
     # print(indirect_light)
 
-    return direct_light + indirect_light
+    return direct_light/pi + indirect_light*2
 
 
 def render_row(settings):
@@ -91,17 +91,14 @@ def render_row(settings):
     return t
 
 
-def render(scene, progresive = False):
+def render(scene, doClip = False):
     row_list = []
 
     width, height = scene.rendersize
 
     for y in range(0, height):
-        if progresive:
-            row_list.append(RowSettings(scene, width=width, height=height, row=y, ss=1))
-        else:
-            row_list.append(RowSettings(scene, width=width, height=height, row=y, ss=scene.ss))
-    with Pool() as p:
+        row_list.append(RowSettings(scene, width=width, height=height, row=y, ss=scene.ss))
+    with Pool(6) as p:
         img = list(tqdm(p.imap(render_row, row_list), total=height))
 
     img = sorted(img)
@@ -110,7 +107,7 @@ def render(scene, progresive = False):
     for row in img:
         a.append(row[1])
 
-    if not progresive:
+    if not doClip:
         a = clip(a)
 
     # plt.imshow(a)
@@ -120,14 +117,22 @@ def render(scene, progresive = False):
 
 
 def progressive_render(scene, batch=1, file = None):
-    img = render(scene, progresive=True)
+    ss = scene.ss
 
-    for cycle in tqdm(range(scene.ss-1)):
-        img = blend([img,render(scene, progresive=True)],[1,1/(cycle+2)])
+    scene.ss = 1
+
+    img = render(scene, doClip=True)
+
+    scene.ss = batch
+
+    for cycle in tqdm(range((ss-1)//batch)):
+        img = blend([img,render(scene, doClip=True)],[1,1/(cycle+2)])
         if file:
             save_img(clip(img), file)
 
     img = clip(img)
+
+    scene.ss = ss
 
     return img
 
@@ -140,5 +145,6 @@ def show_img(img):
     plt.show()
 
 def save_img(img, file):
+    img = blur(img,17)
     image = Image.fromarray((np.array(img)*255).astype('uint8'),"RGB")
     image.save(file,"PNG")
