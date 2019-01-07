@@ -8,6 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
+from PostProcessing import blend
 from Shaders import *
 from MathUtil import *
 from SceneObjects import *
@@ -85,7 +86,7 @@ def render_row(settings):
             ray = Ray(settings.scene.camera.point.pos, raydir)
             col += trace(ray, settings.scene, 3)
         col /= settings.ss
-        t[1].append(clip(col.toList()))
+        t[1].append(col.toList())
     return t
 
 
@@ -104,6 +105,21 @@ def render(scene):
     a = []
     for row in img:
         a.append(row[1])
-    print(a)
-    plt.imshow(a)
+
+    # plt.imshow(a)
+    # plt.show()
+
+    return a
+
+def progressive_render(scene):
+    img = render(scene)
+
+    #for cycle in range(scene.ss-1):
+    for cycle in range(20):
+        img = blend([img,render(scene)],[1,1/(cycle+2)])
+
+    img = clip(img)
+
+    plt.imshow(img)
     plt.show()
+

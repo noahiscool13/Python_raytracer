@@ -11,4 +11,4 @@ if __name__ == '__main__':
     lights = scene.lights
     camera = scene.camera
 
-    render(scene)
+    progressive_render(scene)
