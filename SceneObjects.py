@@ -9,10 +9,17 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 
 
+class CompositeObject:
+    pass
+
+
 class Hit:
     def __init__(self, obj, t):
         self.obj = obj
         self.t = t
+
+    def __bool__(self):
+        return True
 
 
 class Material:
@@ -262,6 +269,28 @@ class Triangle():
 
         return AAbox(minvec, maxvec)
 
+    def area(self):
+        edge1 = self.b.pos - self.a.pos
+        edge2 = self.c.pos - self.a.pos
+
+        cross =  edge1.cross_product(edge2)
+        double_area = cross.length()
+        return double_area/2
+
+    def random_point_on_surface(self):
+        edge1 = self.b.pos - self.a.pos
+        edge2 = self.c.pos - self.a.pos
+
+        a = 1
+        b = 1
+
+        while a+b > 1:
+            a = random()
+            b = random()
+
+        return self.a.pos + edge1 * a + edge2 * b
+
+
 
 class Light:
     def __init__(self, pos, color, softness=0.1):
@@ -442,7 +471,7 @@ class AAbox:
         glEnd()
 
 
-class AABB:
+class AABB(CompositeObject):
     def __init__(self, box=None, objects=None):
         self.box = box
         if objects:
@@ -467,7 +496,7 @@ class AABB:
         self.box.draw_gl()
 
 
-class KDtree:
+class KDtree(CompositeObject):
     def __init__(self, depth, box):
         self.depth = depth
         self.box = box
@@ -593,3 +622,65 @@ class KDtree:
         self.box.draw_gl()
         self.left.draw_gl()
         self.right.draw_gl()
+
+
+class Photon:
+    def __init__(self, pos, col, direction):
+        self.pos = pos
+        self.col = col
+        self.direction = direction
+
+    @staticmethod
+    def generate_random_on_object(obj, power):
+        if isinstance(obj, Triangle):
+            obj_normal = obj.normal()
+            pos = obj.random_point_on_surface() + obj_normal * EPSILON
+
+            direction = Vec3.point_on_hemisphere(obj.normal())
+            col = obj.material.Ke * power
+
+            return Photon(pos, col, direction)
+
+    def forward(self, scene, depth, bounceList = None):
+        if not bounceList:
+            bounceList = []
+
+        if depth > 1:
+            ray = Ray(self.pos, self.direction)
+
+            bounce = ray.intersect(scene)
+
+            if bounce:
+                bounce_object = bounce.obj
+
+                bounce_ds_r = bounce_object.material.Kd.x + bounce_object.material.Ks.x
+                bounce_ds_g = bounce_object.material.Kd.y + bounce_object.material.Ks.y
+                bounce_ds_b = bounce_object.material.Kd.z + bounce_object.material.Ks.z
+
+                object_Kd = bounce_object.material.Kd.length()
+                object_Ks = bounce_object.material.Ks.length()
+
+                propability_reflection = max(bounce_ds_r, bounce_ds_g, bounce_ds_b)
+
+                propability_difuse = object_Kd/(object_Kd+object_Ks)*propability_reflection
+
+                propability_specular = propability_reflection - propability_difuse
+
+                rnd = random()
+
+                if rnd < propability_difuse:
+                    # TODO Add difuse bounce
+                    pass
+
+                elif rnd < propability_difuse + propability_specular:
+                    # TODO Add specular bounce
+                    pass
+
+                else:
+                    # TODO Add absorp
+                    pass
+
+                return [deepcopy(self)]
+
+        return []
+

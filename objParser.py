@@ -107,9 +107,12 @@ def parse_obj(data):
                         #p1.normal = vertex_normals[int(ps[2])-1]
 
                 for p in range(len(face_points)-2):
-                    scene.objects.append(
-                        Triangle(face_points[0], face_points[p+1], face_points[p+2],material=mtl)
-                    )
+                    triangle = Triangle(face_points[0], face_points[p+1], face_points[p+2],material=mtl)
+
+                    if triangle.area() > 0:
+                        scene.objects.append(
+                            triangle
+                        )
 
     scene.calc_vertex_normals()
 
