@@ -641,10 +641,7 @@ class Photon:
 
             return Photon(pos, col, direction)
 
-    def forward(self, scene, depth, bounceList = None):
-        if not bounceList:
-            bounceList = []
-
+    def forward(self, scene, depth):
         if depth > 1:
             ray = Ray(self.pos, self.direction)
 
@@ -652,6 +649,7 @@ class Photon:
 
             if bounce:
                 bounce_object = bounce.obj
+                bounce_pos = ray.after(bounce.t - EPSILON)
 
                 bounce_ds_r = bounce_object.material.Kd.x + bounce_object.material.Ks.x
                 bounce_ds_g = bounce_object.material.Kd.y + bounce_object.material.Ks.y
@@ -669,18 +667,21 @@ class Photon:
                 rnd = random()
 
                 if rnd < propability_difuse:
-                    # TODO Add difuse bounce
-                    pass
+                    self.col /= propability_difuse
+                    self.col *= bounce_object.material.Kd
+
+                    bounce_photon = Photon(bounce_pos, self.col, Vec3.point_on_hemisphere(bounce_object.normal()))
+
+                    return [self] + bounce_photon.forward(scene, depth-1)
 
                 elif rnd < propability_difuse + propability_specular:
                     # TODO Add specular bounce
                     pass
 
                 else:
-                    # TODO Add absorp
-                    pass
-
-                return [deepcopy(self)]
+                    self.col /= (1-propability_reflection)
+                    self.col *= bounce_object.material.Kd
+                    return [self]
 
         return []
 

@@ -49,13 +49,18 @@ def create_photon_map(scene, global_photons):
             emitable_photons = floor(obj.material.Ke.length() * obj.area() * photons_per_light)
 
             for _ in range(emitable_photons):
-                power_per_phton = 1/emitable_photons
+                power_per_photon = 1/emitable_photons*obj.material.Ke.length() * obj.area()
 
-                photon = Photon.generate_random_on_object(obj, power_per_phton)
+                photon = Photon.generate_random_on_object(obj, power_per_photon)
 
-                photon_bounces += photon.forward(scene, 5)
+                photon_bounces += photon.forward(scene, 10)
 
     return photon_bounces
+
+
+def add_photon_map_to_scene(scene, global_photons):
+    photon_map = create_photon_map(scene, global_photons)
+    scene.photon_map = photon_map
 
 
 if __name__ == '__main__':

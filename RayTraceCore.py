@@ -21,7 +21,29 @@ from multiprocessing import Pool
 from random import random
 
 
+def trace_with_photon_map(ray, scene):
+    hit = ray.intersect(scene)
+
+    if not hit:
+        return Vec3(0.0)
+
+    hit_object, hit_t = hit.obj, hit.t
+
+    posHit = ray.after(hit.t - EPSILON)
+
+    col = Vec3(0.0)
+
+    for photon in scene.photon_map:
+        if photon.pos.distance(posHit) < 0.04:
+            col += photon.col
+
+    return col
+
+
 def trace(ray, scene, depth):
+    if hasattr(scene, "photon_map"):
+        return trace_with_photon_map(ray, scene)
+
     hit = ray.intersect(scene)
 
     if not hit:

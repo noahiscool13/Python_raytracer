@@ -78,6 +78,9 @@ class Vec2:
             return False
         return True
 
+    def distance(self, other):
+        return (self-other).length()
+
 
 class Vec3:
 
@@ -192,6 +195,9 @@ class Vec3:
         z = self.x * Nb.z + self.y * rotation.z + self.z * Nt.z
 
         return Vec3(x, y, z)
+
+    def distance(self, other):
+        return (self-other).length()
 
     @staticmethod
     def point_on_hemisphere(normal = None):
