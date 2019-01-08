@@ -1,3 +1,26 @@
+from copy import deepcopy
+
+from MathUtil import clip
+
+
+def add_images(images, weights=None):
+    if weights == None:
+        weights = [1 for _ in range(len(images))]
+    # else:
+    #     first_weight = weights[0]
+    #     weights = [w / first_weight for w in weights]
+
+    final = deepcopy(images[0])
+
+    for ind, img in enumerate(images[1:]):
+        for y in range(len(img)):
+            for x in range(len(img[0])):
+                for col in range(3):
+                    final[y][x][col] += weights[ind + 1] * img[y][x][col]
+
+    return final
+
+
 def blend(images, weights=None):
     if weights == None:
         weights = [1 for _ in range(len(images))]
@@ -5,13 +28,7 @@ def blend(images, weights=None):
         first_weight = weights[0]
         weights = [w / first_weight for w in weights]
 
-    final = images[0]
-
-    for ind, img in enumerate(images[1:]):
-        for y in range(len(img)):
-            for x in range(len(img[0])):
-                for col in range(3):
-                    final[y][x][col] += weights[ind + 1] * img[y][x][col]
+    final = add_images(images, weights)
 
     total_weight = sum(weights)
 
@@ -67,11 +84,21 @@ def thresh(img, threshold):
         row = []
 
         for x in range(len(img[0])):
-            if sum(img[y][x]) / 3 > threshold:
-                row.append(img[y][x])
+            if sum(img[y][x]) / 3.0 > threshold:
+                row.append(img[y][x][:])
             else:
                 row.append([0, 0, 0])
 
         new_img.append(row)
 
     return new_img
+
+
+def bloom(img, threshold=1, amount=0.2, kernel_size=9):
+    threshed = thresh(img, threshold)
+
+    blurred = blur(threshed, kernel_size)
+
+    final = clip(add_images([img, blurred], [1, amount]))
+
+    return final

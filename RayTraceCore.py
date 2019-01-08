@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from PIL import Image
 from tqdm import tqdm
 
-from PostProcessing import blend, blur
+from PostProcessing import blend, blur, bloom
 from Shaders import *
 from MathUtil import *
 from SceneObjects import *
@@ -107,7 +107,7 @@ def render(scene, doClip = False):
     for row in img:
         a.append(row[1])
 
-    if not doClip:
+    if doClip:
         a = clip(a)
 
     # plt.imshow(a)
@@ -119,16 +119,17 @@ def render(scene, doClip = False):
 def progressive_render(scene, batch=1, file = None):
     ss = scene.ss
 
-    scene.ss = 1
-
-    img = render(scene, doClip=True)
-
     scene.ss = batch
 
+    img = render(scene, doClip=False)
+
+    if file:
+        save_img(img, file)
+
     for cycle in tqdm(range((ss-1)//batch)):
-        img = blend([img,render(scene, doClip=True)],[1,1/(cycle+2)])
+        img = blend([img,render(scene, doClip=False)],[1,1/(cycle+1)])
         if file:
-            save_img(clip(img), file)
+            save_img(img, file)
 
     img = clip(img)
 
@@ -145,6 +146,8 @@ def show_img(img):
     plt.show()
 
 def save_img(img, file):
-    img = blur(img,17)
-    image = Image.fromarray((np.array(img)*255).astype('uint8'),"RGB")
+    image = Image.fromarray((np.array(clip(img)) * 255).astype('uint8'), "RGB")
+    image.save("no_bloom.png", "PNG")
+    bloom_img = bloom(img)
+    image = Image.fromarray((np.array(bloom_img)*255).astype('uint8'),"RGB")
     image.save(file,"PNG")

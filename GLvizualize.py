@@ -101,15 +101,15 @@ def main():
 
 
 if __name__ == "__main__":
-    with open("teapot.obj", "r") as file:
+    with open("monte-carlo.obj", "r") as file:
         scene = parse_obj(file.read())
-    with open("teapot.senario") as file:
+    with open("monte-carlo.senario") as file:
         parse_senario(file.read(), scene)
     objects = scene.objects
     lights = scene.lights
     if len(lights) == 0:
         lights.append(Light(scene.camera.point.pos, Vec3(1)))
-    scene.optimize_scene(amount=8)
+    #scene.optimize_scene(amount=8)
 
         #render(scene)
     main()
