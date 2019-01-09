@@ -34,8 +34,8 @@ def trace_with_photon_map(ray, scene):
     col = Vec3(0.0)
 
     for photon in scene.photon_map:
-        if photon.pos.distance(posHit) < 0.04:
-            col += photon.col
+        if photon.pos.distance(posHit) < 0.05:
+            col += photon.col * 3
 
     return col
 
@@ -120,7 +120,7 @@ def render(scene, doClip = False):
 
     for y in range(0, height):
         row_list.append(RowSettings(scene, width=width, height=height, row=y, ss=scene.ss))
-    with Pool(6) as p:
+    with Pool(8) as p:
         img = list(tqdm(p.imap(render_row, row_list), total=height))
 
     img = sorted(img)

@@ -353,11 +353,14 @@ class RowSettings:
 
 
 class AAbox:
-    def __init__(self, min_corner, max_corner):
+    def __init__(self, min_corner = None, max_corner = None):
         self.min_corner = min_corner
         self.max_corner = max_corner
 
     def size(self):
+        if not self.min_corner:
+            return 0
+
         x = self.max_corner.x - self.min_corner.x
         y = self.max_corner.y - self.min_corner.y
         z = self.max_corner.z - self.min_corner.z
@@ -365,6 +368,9 @@ class AAbox:
         return Vec3(x, y, z)
 
     def surface_area(self):
+        if not self.min_corner:
+            return 0
+
         size = self.size()
         surfaceTop = size.x * size.z
         surfaceFront = size.x * size.y
@@ -372,16 +378,37 @@ class AAbox:
         return 2 * (surfaceTop + surfaceFront + surfaceSide)
 
     def extend(self, box):
-        xmin = min(self.min_corner.x, box.min_corner.x)
-        ymin = min(self.min_corner.y, box.min_corner.y)
-        zmin = min(self.min_corner.z, box.min_corner.z)
+        if not self.min_corner:
+            other_box = box.box()
+            self.min_corner = other_box.min_corner
+            self.max_corner = other_box.max_corner
 
-        xmax = max(self.max_corner.x, box.max_corner.x)
-        ymax = max(self.max_corner.y, box.max_corner.y)
-        zmax = max(self.max_corner.z, box.max_corner.z)
+        elif isinstance(box, Photon):
+            xmin = min(self.min_corner.x, box.pos.x)
+            ymin = min(self.min_corner.y, box.pos.y)
+            zmin = min(self.min_corner.z, box.pos.z)
 
-        self.min_corner = Vec3(xmin, ymin, zmin)
-        self.max_corner = Vec3(xmax, ymax, zmax)
+            xmax = max(self.max_corner.x, box.pos.x)
+            ymax = max(self.max_corner.y, box.pos.y)
+            zmax = max(self.max_corner.z, box.pos.z)
+
+            self.min_corner = Vec3(xmin, ymin, zmin)
+            self.max_corner = Vec3(xmax, ymax, zmax)
+
+        elif isinstance(box, AAbox):
+            xmin = min(self.min_corner.x, box.min_corner.x)
+            ymin = min(self.min_corner.y, box.min_corner.y)
+            zmin = min(self.min_corner.z, box.min_corner.z)
+
+            xmax = max(self.max_corner.x, box.max_corner.x)
+            ymax = max(self.max_corner.y, box.max_corner.y)
+            zmax = max(self.max_corner.z, box.max_corner.z)
+
+            self.min_corner = Vec3(xmin, ymin, zmin)
+            self.max_corner = Vec3(xmax, ymax, zmax)
+
+    def box(self):
+        return self
 
     def intersect(self, other):
         if isinstance(other, Triangle):
@@ -436,6 +463,17 @@ class AAbox:
 
             return True
 
+    def longest_axis(self):
+        self_size = self.size()
+
+        if self_size.x > self_size.y > self_size.z:
+            return 0
+
+        if self_size.y > self_size.z:
+            return 1
+
+        return 2
+
     def draw_gl(self):
         glPushAttrib(GL_POLYGON_MODE)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
@@ -473,7 +511,11 @@ class AAbox:
 
 class AABB(CompositeObject):
     def __init__(self, box=None, objects=None):
-        self.box = box
+        if not box:
+            self.box = AAbox()
+        else:
+            self.box = box
+
         if objects:
             self.objects = objects
         else:
@@ -505,6 +547,38 @@ class KDtree(CompositeObject):
     def build(depth, box, objects=None, root=False):
         if isinstance(box, AABB):
             return KDtree.build(depth, box.box, box.objects, root)
+
+        if isinstance(box, PhotonBox):
+
+            if depth <= 0 or len(box.photons) < 10:
+                return box
+
+            longest_axis = box.box.longest_axis()
+
+            if longest_axis == 0:
+                box.photons.sort(key= lambda photon: photon.pos.x)
+            elif longest_axis == 1:
+                box.photons.sort(key= lambda photon: photon.pos.y)
+            elif longest_axis == 2:
+                box.photons.sort(key= lambda photon: photon.pos.z)
+
+            photon_len = len(box.photons)
+
+            median = photon_len//2
+
+            left = box.photons[:median]
+            right = box.photons[:median]
+
+            leftBox = PhotonBox(PhotonList(left))
+            rightBox = PhotonBox(PhotonList(right))
+
+            tree = KDtree(depth, box.box)
+
+            tree.left = KDtree.build(depth-1, leftBox)
+            tree.right = KDtree.build(depth - 1, rightBox)
+
+            return tree
+
 
         if depth <= 0 or len(objects) < 30:
             return AABB(box, objects)
@@ -630,6 +704,9 @@ class Photon:
         self.col = col
         self.direction = direction
 
+    def box(self):
+        return AAbox(self.pos, self.pos)
+
     @staticmethod
     def generate_random_on_object(obj, power):
         if isinstance(obj, Triangle):
@@ -684,4 +761,26 @@ class Photon:
                     return [self]
 
         return []
+
+
+class PhotonList:
+    def __init__(self, photons = None):
+        self.photons = []
+        if photons:
+            self.photons = photons
+
+    def __iter__(self):
+        for photon in self.photons:
+            yield photon
+
+
+class PhotonBox:
+    def __init__(self, photon_list):
+        box = AAbox()
+
+        for photon in photon_list:
+            box.extend(photon)
+
+        self.box = box
+        self.photons = photon_list.photons
 

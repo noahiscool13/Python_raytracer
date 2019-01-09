@@ -1,6 +1,6 @@
 from math import floor
 
-from SceneObjects import KDtree, CompositeObject, Light, Triangle, Photon, Ray
+from SceneObjects import KDtree, CompositeObject, Light, Triangle, Photon, Ray, PhotonList, PhotonBox
 from objParser import parse_obj, parse_senario
 
 
@@ -70,5 +70,11 @@ if __name__ == '__main__':
         parse_senario(file.read(), scene)
     scene.optimize_scene(amount=20)
 
-    print(create_photon_map(scene,50))
-    print(len(create_photon_map(scene,50)))
+    map = create_photon_map(scene,50)
+
+    map = PhotonList(map)
+    map = PhotonBox(map)
+
+    map = KDtree.build(5, map)
+
+    print(map)
