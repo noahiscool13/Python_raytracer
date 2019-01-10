@@ -692,13 +692,28 @@ class KDtree(CompositeObject):
 
         return False
 
+    @staticmethod
+    def nearest_neighbour_helper(pos, dist, kd):
+        if isinstance(kd, PhotonBox):
+            nearest = kd.nearest_neighbour(pos)
+            dist_nearest = nearest.distance(pos)
+
+            return min(dist, dist_nearest)
+
+        if kd.left.box.distance(pos) < dist:
+            dist = min(dist,KDtree.nearest_neighbour_helper(pos,dist,kd.left))
+
+        if kd.right.box.distance(pos) < dist:
+            dist = min(dist,KDtree.nearest_neighbour_helper(pos,dist,kd.left))
+
+        return dist
+
     def nearest_neighbour(self, pos):
         box = self.get_box_at(pos)
         nearest = box.nearest_neighbour(pos)
         nearest_dist = nearest.distance(pos)
 
-
-
+        return KDtree.nearest_neighbour_helper(pos, nearest_dist, self)
 
     @staticmethod
     def build(depth, box, objects=None, root=False):
