@@ -1,4 +1,5 @@
 from random import random, uniform
+from typing import Any, Union
 
 from MathUtil import *
 from math import *
@@ -410,6 +411,142 @@ class AAbox:
     def box(self):
         return self
 
+    def margin_around(self, pos):
+        if not self.intersect(pos):
+            return False
+
+        left = pos.x - self.min_corner.x
+        right = self.max_corner.x = pos.x
+
+        up = pos.y - self.min_corner.y
+        down = self.max_corner.y = pos.y
+
+        front = pos.z - self.min_corner.z
+        back = self.max_corner.z = pos.z
+
+        return min(left, right, up, down, front, back)
+
+    def distance(self, pos):
+        """"
+        z<box.minz   box.minz<z<box.maxz   box.maxz<z
+         1   2   3        10  11  12        19  20  21
+           m####             ####              ####
+       ^ 4 # 5 # 6        13 #14# 15        22 #23# 23
+       ^   #####             ####              ###M
+       | 7   8   9        16  17  18        25  26  27
+       y
+         x->>
+        """
+
+        if pos.z < self.min_corner.z:
+            if pos.y < self.min_corner.y:
+                # 1
+                if pos.x < self.min_corner.x:
+                    return self.min_corner.distance(pos)
+
+                # 2
+                if pos.x < self.max_corner.x:
+                    return Vec2(pos.y, pos.z).distance(Vec2(self.min_corner.y, self.min_corner.z))
+
+                # 3
+                return Vec3(self.max_corner.x, self.min_corner.y, self.min_corner.z).distance(pos)
+
+            if pos.y < self.max_corner.y:
+                # 4
+                if pos.x < self.min_corner.x:
+                    return Vec2(pos.x, pos.z).distance(Vec2(self.min_corner.x, self.min_corner.z))
+
+                # 5
+                if pos.x < self.max_corner.x:
+                    return self.min_corner.z - pos.z
+
+                # 6
+                return Vec2(pos.x, pos.z).distance(Vec2(self.max_corner.x, self.min_corner.z))
+
+
+            # 7
+            if pos.x < self.min_corner.x:
+                return Vec3(self.min_corner.x, self.max_corner.y, self.min_corner.z).distance(pos)
+
+            # 8
+            if pos.x < self.max_corner.x:
+                return Vec2(pos.y, pos.z).distance(Vec2(self.max_corner.y, self.min_corner.z))
+
+            # 9
+            return Vec3(self.max_corner.x, self.max_corner.y, self.min_corner.z).distance(pos)
+
+        if pos.z < self.max_corner.z:
+            if pos.y < self.min_corner.y:
+                # 10
+                if pos.x < self.min_corner.x:
+                    return Vec2(pos.x, pos.y).distance(Vec2(self.min_corner.x, self.min_corner.y))
+
+                # 11
+                if pos.x < self.max_corner.x:
+                    return self.min_corner.y - pos.y
+
+                # 12
+                return Vec2(pos.x, pos.y).distance(Vec2(self.max_corner.x, self.min_corner.y))
+
+            if pos.y < self.max_corner.y:
+                # 13
+                if pos.x < self.min_corner.x:
+                    return self.min_corner.x - pos.x
+
+                # 14
+                if pos.x < self.max_corner.x:
+                    return 0
+
+                # 15
+                return pos.x - self.max_corner.x
+
+            # 16
+            if pos.x < self.min_corner.x:
+                return Vec2(pos.x, pos.y).distance(Vec2(self.max_corner.x, self.min_corner.y))
+
+            # 17
+            if pos.x < self.max_corner.x:
+                return pos.y - self.max_corner.y
+
+            # 18
+            return Vec2(pos.x, pos.y).distance(Vec2(self.max_corner.x, self.max_corner.y))
+
+        if pos.y < self.min_corner.y:
+            # 19
+            if pos.x < self.min_corner.x:
+                return Vec3(self.min_corner.x, self.min_corner.y, self.max_corner.z).distance(pos)
+
+            # 20
+            if pos.x < self.max_corner.x:
+                return Vec2(pos.y, pos.z).distance(Vec2(self.min_corner.y, self.max_corner.z))
+
+            # 21
+            return Vec3(self.max_corner.x, self.min_corner.y, self.max_corner.z).distance(pos)
+
+        if pos.y < self.max_corner.y:
+            # 22
+            if pos.x < self.min_corner.x:
+                return Vec2(pos.x, pos.z).distance(Vec2(self.min_corner.x, self.max_corner.z))
+
+            # 23
+            if pos.x < self.max_corner.x:
+                return pos.z - self.max_corner.z
+
+            # 24
+            return Vec2(pos.x, pos.z).distance(Vec2(self.max_corner.x, self.max_corner.z))
+
+        # 25
+        if pos.x < self.min_corner.x:
+            return Vec3(self.min_corner.x, self.max_corner.y, self.max_corner.z).distance(pos)
+
+        # 8
+        if pos.x < self.max_corner.x:
+            return Vec2(pos.y, pos.z).distance(Vec2(self.max_corner.y, self.max_corner.z))
+
+        # 27
+        return self.max_corner.distance(pos)
+
+
     def intersect(self, other):
         if isinstance(other, Triangle):
             # TODO better implementation of this, this has false positives
@@ -530,6 +667,9 @@ class AABB(CompositeObject):
         else:
             self.box = other.box()
 
+    def get_box_at(self, pos):
+        return self
+
     def add_norm_to_vertices(self):
         for shape in self.objects:
             shape.add_norm_to_vertices()
@@ -542,6 +682,23 @@ class KDtree(CompositeObject):
     def __init__(self, depth, box):
         self.depth = depth
         self.box = box
+
+    def get_box_at(self, pos):
+        if self.left.box.intersect(pos):
+            return self.left.get_box_at(pos)
+
+        elif self.right.box.intersect(pos):
+            return self.right.get_box_at(pos)
+
+        return False
+
+    def nearest_neighbour(self, pos):
+        box = self.get_box_at(pos)
+        nearest = box.nearest_neighbour(pos)
+        nearest_dist = nearest.distance(pos)
+
+
+
 
     @staticmethod
     def build(depth, box, objects=None, root=False):
@@ -707,6 +864,20 @@ class Photon:
     def box(self):
         return AAbox(self.pos, self.pos)
 
+    def dist(self, other):
+        if isinstance(other, Vec3):
+            return self.pos.distance(other)
+
+        elif isinstance(other, Photon):
+            return self.pos.distance(other.pos)
+
+    def dist2(self, other):
+        if isinstance(other, Vec3):
+            return self.pos.distance2(other)
+
+        elif isinstance(other, Photon):
+            return self.pos.distance2(other.pos)
+
     @staticmethod
     def generate_random_on_object(obj, power):
         if isinstance(obj, Triangle):
@@ -783,4 +954,20 @@ class PhotonBox:
 
         self.box = box
         self.photons = photon_list.photons
+
+    def nearest_neighbour(self, pos):
+        best_obj = None
+        best_dist2 = inf
+
+        for obj in self.photons:
+            dist2 = obj.distance2(pos)
+
+            if dist2 < best_dist2:
+                best_dist2 = dist2
+                best_obj = obj
+
+        return best_obj
+
+    def get_box_at(self, pos):
+        return self
 
