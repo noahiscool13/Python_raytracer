@@ -693,27 +693,42 @@ class KDtree(CompositeObject):
         return False
 
     @staticmethod
-    def nearest_neighbour_helper(pos, dist, kd):
+    def nearest_neighbour_helper(pos, dist, photon, kd):
         if isinstance(kd, PhotonBox):
-            nearest = kd.nearest_neighbour(pos)
-            dist_nearest = nearest.distance(pos)
+            hit = kd.nearest_neighbour(pos)
+            nearest_photon = hit.obj
+            nearest_dist = hit.t
 
-            return min(dist, dist_nearest)
+            if nearest_dist < dist:
+                return Hit(nearest_photon, nearest_dist)
+
+            return
 
         if kd.left.box.distance(pos) < dist:
-            dist = min(dist,KDtree.nearest_neighbour_helper(pos,dist,kd.left))
+            hit = KDtree.nearest_neighbour_helper(pos,dist,photon,kd.left)
+            if hit and hit.t < dist:
+                dist = hit.t
+                photon = hit.obj
 
         if kd.right.box.distance(pos) < dist:
-            dist = min(dist,KDtree.nearest_neighbour_helper(pos,dist,kd.left))
+            hit = KDtree.nearest_neighbour_helper(pos, dist, photon, kd.right)
+            if hit and hit.t < dist:
+                dist = hit.t
+                photon = hit.obj
 
-        return dist
+        return Hit(photon, dist)
 
     def nearest_neighbour(self, pos):
         box = self.get_box_at(pos)
-        nearest = box.nearest_neighbour(pos)
-        nearest_dist = nearest.distance(pos)
+        if not box:
+            nearest_photon = None
+            nearest_dist = inf
+        else:
+            hit = box.nearest_neighbour(pos)
+            nearest_photon = hit.obj
+            nearest_dist = hit.t
 
-        return KDtree.nearest_neighbour_helper(pos, nearest_dist, self)
+        return KDtree.nearest_neighbour_helper(pos, nearest_dist,nearest_photon, self)
 
     @staticmethod
     def build(depth, box, objects=None, root=False):
@@ -722,7 +737,7 @@ class KDtree(CompositeObject):
 
         if isinstance(box, PhotonBox):
 
-            if depth <= 0 or len(box.photons) < 10:
+            if depth <= 0 or len(box.photons) < 25:
                 return box
 
             longest_axis = box.box.longest_axis()
@@ -739,10 +754,37 @@ class KDtree(CompositeObject):
             median = photon_len//2
 
             left = box.photons[:median]
-            right = box.photons[:median]
+            right = box.photons[median:]
 
-            leftBox = PhotonBox(PhotonList(left))
-            rightBox = PhotonBox(PhotonList(right))
+            if longest_axis == 0:
+                left_box = deepcopy(box.box)
+                right_box = deepcopy(box.box)
+
+                middle_x = (left[-1].pos.x + right[0].pos.x)/2
+
+                left_box.max_corner.x = middle_x
+                right_box.min_corner.x = middle_x
+
+            elif longest_axis == 1:
+                left_box = deepcopy(box.box)
+                right_box = deepcopy(box.box)
+
+                middle_y = (left[-1].pos.y + right[0].pos.y) / 2
+
+                left_box.max_corner.y = middle_y
+                right_box.min_corner.y = middle_y
+
+            elif longest_axis == 2:
+                left_box = deepcopy(box.box)
+                right_box = deepcopy(box.box)
+
+                middle_z = (left[-1].pos.z + right[0].pos.z) / 2
+
+                left_box.max_corner.z = middle_z
+                right_box.min_corner.z = middle_z
+
+            leftBox = PhotonBox(PhotonList(left), left_box)
+            rightBox = PhotonBox(PhotonList(right), right_box)
 
             tree = KDtree(depth, box.box)
 
@@ -879,14 +921,14 @@ class Photon:
     def box(self):
         return AAbox(self.pos, self.pos)
 
-    def dist(self, other):
+    def distance(self, other):
         if isinstance(other, Vec3):
             return self.pos.distance(other)
 
         elif isinstance(other, Photon):
             return self.pos.distance(other.pos)
 
-    def dist2(self, other):
+    def distance2(self, other):
         if isinstance(other, Vec3):
             return self.pos.distance2(other)
 
@@ -961,14 +1003,19 @@ class PhotonList:
 
 
 class PhotonBox:
-    def __init__(self, photon_list):
-        box = AAbox()
+    def __init__(self, photon_list, box = None):
+        if box:
+            self.box = box
+            self.photons = photon_list.photons
 
-        for photon in photon_list:
-            box.extend(photon)
+        else:
+            box = AAbox()
 
-        self.box = box
-        self.photons = photon_list.photons
+            for photon in photon_list:
+                box.extend(photon)
+
+            self.box = box
+            self.photons = photon_list.photons
 
     def nearest_neighbour(self, pos):
         best_obj = None
@@ -981,7 +1028,7 @@ class PhotonBox:
                 best_dist2 = dist2
                 best_obj = obj
 
-        return best_obj
+        return Hit(best_obj, sqrt(best_dist2))
 
     def get_box_at(self, pos):
         return self

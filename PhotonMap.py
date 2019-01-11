@@ -63,6 +63,10 @@ def add_photon_map_to_scene(scene, global_photons):
     scene.photon_map = photon_map
 
 
+def optimize_photon_map(scene, depth):
+    scene.photon_map = [KDtree.build(depth, PhotonBox(PhotonList(scene.photon_map)))]
+
+
 if __name__ == '__main__':
     with open("monte-carlo.obj", "r") as file:
         scene = parse_obj(file.read())

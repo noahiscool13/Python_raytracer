@@ -1,4 +1,4 @@
-from PhotonMap import add_photon_map_to_scene
+from PhotonMap import add_photon_map_to_scene, optimize_photon_map
 from objParser import *
 from RayTraceCore import *
 
@@ -8,7 +8,8 @@ if __name__ == '__main__':
     with open("monte-carlo.senario") as file:
         parse_senario(file.read(), scene)
     scene.optimize_scene(amount=20)
-    #add_photon_map_to_scene(scene, 25000)
-    img = progressive_render(scene,batch=100, file="testRender.png")
+    add_photon_map_to_scene(scene, 2000)
+    optimize_photon_map(scene, 50)
+    img = clip(render(scene))
     show_img(img)
-    save_img(img,"testRender.png")
+    save_img(img,"cornellBox3.png")
