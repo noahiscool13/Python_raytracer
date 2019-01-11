@@ -546,6 +546,20 @@ class AAbox:
         # 27
         return self.max_corner.distance(pos)
 
+    @staticmethod
+    def large_box(min_corner = None, max_corner = None):
+        if min_corner:
+            box_min_corner = min_corner - Vec3(1000)
+        else:
+            box_min_corner = Vec3(-1000)
+
+        if max_corner:
+            box_max_corner = max_corner + Vec3(1000)
+        else:
+            box_max_corner = Vec3(1000)
+
+        return AAbox(box_min_corner, box_max_corner)
+
 
     def intersect(self, other):
         if isinstance(other, Triangle):
@@ -1013,6 +1027,8 @@ class PhotonBox:
 
             for photon in photon_list:
                 box.extend(photon)
+
+            box = AAbox.large_box(box.min_corner, box.max_corner)
 
             self.box = box
             self.photons = photon_list.photons
