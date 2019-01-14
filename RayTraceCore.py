@@ -35,7 +35,7 @@ def trace_with_photon_map(ray, scene):
     dist = inf
 
     for tree in scene.photon_map:
-        hit = tree.k_nearest_neighbours(posHit,15)
+        hit = tree.k_nearest_neighbours_plane(posHit,100,hit_object.normal(),max_dist=0.2)
 
     col = Vec3(0.0)
 
@@ -44,7 +44,7 @@ def trace_with_photon_map(ray, scene):
         for p in hit:
 
             #col += p.col / (dist_to_photon * pi) / 150
-            col += p.col / (dist_to_photon*pi)/150
+            col += p.col / (dist_to_photon*pi)/10
 
     return col
 

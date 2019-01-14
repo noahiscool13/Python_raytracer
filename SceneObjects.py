@@ -709,45 +709,54 @@ class KDtree(CompositeObject):
         return False
 
     @staticmethod
-    def nearest_neighbour_helper(pos, dist, photon, kd):
+    def nearest_neighbour_helper(pos, dist, photon, kd, excluding=None, max_dist=None):
         if isinstance(kd, PhotonBox):
-            hit = kd.nearest_neighbour(pos)
+            if excluding:
+                hit = kd.nearest_neighbour_excluding(pos, excluding, max_dist)
+            else:
+                hit = kd.nearest_neighbour(pos, excluding)
+
+            if not hit:
+                return False
+
             nearest_photon = hit.obj
             nearest_dist = hit.t
 
             if nearest_dist < dist:
                 return Hit(nearest_photon, nearest_dist)
 
-            return
+            return False
 
         if kd.left.box.distance(pos) < dist:
-            hit = KDtree.nearest_neighbour_helper(pos,dist,photon,kd.left)
+            hit = KDtree.nearest_neighbour_helper(pos,dist,photon,kd.left, excluding, max_dist)
             if hit and hit.t < dist:
                 dist = hit.t
                 photon = hit.obj
 
         if kd.right.box.distance(pos) < dist:
-            hit = KDtree.nearest_neighbour_helper(pos, dist, photon, kd.right)
+            hit = KDtree.nearest_neighbour_helper(pos, dist, photon, kd.right, excluding, max_dist)
             if hit and hit.t < dist:
                 dist = hit.t
                 photon = hit.obj
 
         return Hit(photon, dist)
 
-    def nearest_neighbour(self, pos, excluding = None):
+    def nearest_neighbour(self, pos, excluding = None, max_dist = None):
         box = self.get_box_at(pos)
         if not box:
             nearest_photon = None
             nearest_dist = inf
         else:
             if excluding:
-                hit = box.nearest_neighbour_excluding(pos, excluding)
+                hit = box.nearest_neighbour_excluding(pos, excluding, max_dist)
             else:
-                hit = box.nearest_neighbour(pos)
+                hit = box.nearest_neighbour(pos, max_dist)
+            if not hit:
+                return False
             nearest_photon = hit.obj
             nearest_dist = hit.t
 
-        return KDtree.nearest_neighbour_helper(pos, nearest_dist,nearest_photon, self)
+        return KDtree.nearest_neighbour_helper(pos, nearest_dist,nearest_photon, self, excluding, max_dist)
 
     def k_nearest_neighbours(self, pos, k):
         lst = []
@@ -758,6 +767,21 @@ class KDtree(CompositeObject):
                 lst.append(hit.obj)
             else:
                 return False
+
+        return lst
+
+    def k_nearest_neighbours_plane(self, pos, k, normal, max_dist = None):
+        lst = []
+        found = set()
+
+        while len(lst) < k:
+            hit = self.nearest_neighbour(pos, found, max_dist)
+            if hit:
+                found.add(hit.obj)
+                if hit.obj.in_plane(pos, normal):
+                    lst.append(hit.obj)
+            else:
+                return lst
 
         return lst
 
@@ -966,6 +990,11 @@ class Photon:
         elif isinstance(other, Photon):
             return self.pos.distance2(other.pos)
 
+    def in_plane(self, pos, normal, margin=0.001):
+        ax = pos-self.pos
+        ax.normalize()
+        return normal.dot(ax) < margin
+
     @staticmethod
     def generate_random_on_object(obj, power):
         if isinstance(obj, Triangle):
@@ -1050,7 +1079,7 @@ class PhotonBox:
             self.box = box
             self.photons = photon_list.photons
 
-    def nearest_neighbour(self, pos):
+    def nearest_neighbour(self, pos, max_dist = None):
         best_obj = None
         best_dist2 = inf
 
@@ -1061,9 +1090,14 @@ class PhotonBox:
                 best_dist2 = dist2
                 best_obj = obj
 
-        return Hit(best_obj, sqrt(best_dist2))
+        dist = sqrt(best_dist2)
+        if max_dist:
+            if dist > max_dist:
+                return False
 
-    def nearest_neighbour_excluding(self, pos, exclusions):
+        return Hit(best_obj, dist)
+
+    def nearest_neighbour_excluding(self, pos, exclusions, max_dist = None):
         best_obj = None
         best_dist2 = inf
 
@@ -1075,7 +1109,12 @@ class PhotonBox:
                     best_dist2 = dist2
                     best_obj = obj
 
-        return Hit(best_obj, sqrt(best_dist2))
+        dist = sqrt(best_dist2)
+        if max_dist:
+            if dist>max_dist:
+                return False
+
+        return Hit(best_obj, dist)
 
     def k_nearest_neighbours(self, pos, k):
         best_obj = []
