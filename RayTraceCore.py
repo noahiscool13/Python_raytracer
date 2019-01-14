@@ -31,21 +31,20 @@ def trace_with_photon_map(ray, scene):
 
     posHit = ray.after(hit_t - EPSILON)
 
-    photon = None
+    hit = None
     dist = inf
 
     for tree in scene.photon_map:
-        hit = tree.nearest_neighbour(posHit)
-        if hit:
-            if hit.t < dist:
-                photon = hit.obj
-                dist = hit.t
+        hit = tree.k_nearest_neighbours(posHit,15)
 
     col = Vec3(0.0)
 
-    if photon:
-        dist_to_photon = photon.distance2(posHit)
-        col = photon.col / (dist_to_photon * pi) / 80
+    if hit:
+        dist_to_photon = hit[-1].distance2(posHit)
+        for p in hit:
+
+            #col += p.col / (dist_to_photon * pi) / 150
+            col += p.col / (dist_to_photon*pi)/150
 
     return col
 

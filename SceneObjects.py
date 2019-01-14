@@ -1,6 +1,5 @@
 from random import random, uniform
-from typing import Any, Union
-
+from bisect import insort
 from MathUtil import *
 from math import *
 
@@ -21,6 +20,9 @@ class Hit:
 
     def __bool__(self):
         return True
+
+    def __lt__(self, other):
+        return self.t < other.t
 
 
 class Material:
@@ -732,17 +734,32 @@ class KDtree(CompositeObject):
 
         return Hit(photon, dist)
 
-    def nearest_neighbour(self, pos):
+    def nearest_neighbour(self, pos, excluding = None):
         box = self.get_box_at(pos)
         if not box:
             nearest_photon = None
             nearest_dist = inf
         else:
-            hit = box.nearest_neighbour(pos)
+            if excluding:
+                hit = box.nearest_neighbour_excluding(pos, excluding)
+            else:
+                hit = box.nearest_neighbour(pos)
             nearest_photon = hit.obj
             nearest_dist = hit.t
 
         return KDtree.nearest_neighbour_helper(pos, nearest_dist,nearest_photon, self)
+
+    def k_nearest_neighbours(self, pos, k):
+        lst = []
+
+        for x in range(k):
+            hit = self.nearest_neighbour(pos, lst)
+            if hit:
+                lst.append(hit.obj)
+            else:
+                return False
+
+        return lst
 
     @staticmethod
     def build(depth, box, objects=None, root=False):
@@ -1045,6 +1062,46 @@ class PhotonBox:
                 best_obj = obj
 
         return Hit(best_obj, sqrt(best_dist2))
+
+    def nearest_neighbour_excluding(self, pos, exclusions):
+        best_obj = None
+        best_dist2 = inf
+
+        for obj in self.photons:
+            if obj not in exclusions:
+                dist2 = obj.distance2(pos)
+
+                if dist2 < best_dist2:
+                    best_dist2 = dist2
+                    best_obj = obj
+
+        return Hit(best_obj, sqrt(best_dist2))
+
+    def k_nearest_neighbours(self, pos, k):
+        best_obj = []
+        worst_pass_dist2 = 0
+
+        if k > len(self.photons):
+            for photon in self.photons:
+                best_obj.append(Hit(photon, photon.distance(pos)))
+
+            best_obj.sort()
+
+            return best_obj
+
+        for obj in self.photons:
+            dist2 = obj.distance2(pos)
+
+            if len(best_obj) < k:
+                best_obj.append(obj)
+                worst_pass_dist2 = max(worst_pass_dist2, dist2)
+
+            elif dist2 < worst_pass_dist2:
+                best_obj = best_obj[:-1]
+                insort(best_obj,Hit(obj,dist2))
+                worst_pass_dist2 = best_obj[-1].t
+
+        return best_obj
 
     def get_box_at(self, pos):
         return self
