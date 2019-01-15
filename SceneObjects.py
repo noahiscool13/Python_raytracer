@@ -248,7 +248,10 @@ class Triangle():
         return aToB.cross_product(aToC)
 
     def __str__(self):
-        return f"Triangle<{self.a} {self.b} {self.c}>"
+        return "Triangle<{} {} {}".format(self.a, self.b, self.c)
+
+        # no support for this on the HPC 10 cluster
+        #return f"Triangle<{self.a} {self.b} {self.c}>"
 
     def toList(self):
         return [self.a.toList(), self.b.toList(), self.c.toList()]
@@ -308,7 +311,11 @@ class Light:
                                         (random()-0.5)*self.softness)
 
     def __str__(self):
-        return f"Light<{self.pos} {self.color}>"
+        return "Light<{} {}>".format(self.pos, self.color)
+
+
+        # no support for this on the HPC 10 cluster
+        #return f"Light<{self.pos} {self.color}>"
 
 
 class Camera:

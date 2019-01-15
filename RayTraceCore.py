@@ -44,7 +44,7 @@ def trace_with_photon_map(ray, scene):
         for p in hit:
 
             #col += p.col / (dist_to_photon * pi) / 150
-            col += p.col / (dist_to_photon*pi)/10
+            col += p.col / (dist_to_photon*pi)/15
 
     return col
 
