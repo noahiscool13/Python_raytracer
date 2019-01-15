@@ -5,7 +5,11 @@
 
 import numpy as np
 
-import matplotlib.pyplot as plt
+try:
+    import matplotlib.pyplot as plt
+except:
+    print("NO MATPLOTLIB")
+
 from PIL import Image
 from tqdm import tqdm
 

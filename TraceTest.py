@@ -19,5 +19,5 @@ if __name__ == '__main__':
     img = render(scene, True)
 
     print(img)
-    show_img(img)
+    #show_img(img)
     save_img(img,"cornellBox3.png")
