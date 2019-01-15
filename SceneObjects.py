@@ -5,8 +5,12 @@ from math import *
 
 from copy import deepcopy
 
-from OpenGL.GL import *
-from OpenGL.GLU import *
+try:
+    from OpenGL.GL import *
+    from OpenGL.GLU import *
+    headless = False
+except:
+    headless = True
 
 
 class CompositeObject:
@@ -635,38 +639,39 @@ class AAbox:
         return 2
 
     def draw_gl(self):
-        glPushAttrib(GL_POLYGON_MODE)
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
-        glBegin(GL_QUADS)
-        glColor3f(1, 0.6, 0.4);
-        glVertex3f(self.min_corner.x, self.min_corner.y, self.min_corner.z)
-        glVertex3f(self.max_corner.x, self.min_corner.y, self.min_corner.z)
-        glVertex3f(self.max_corner.x, self.max_corner.y, self.min_corner.z)
-        glVertex3f(self.min_corner.x, self.max_corner.y, self.min_corner.z)
+        if not headless:
+            glPushAttrib(GL_POLYGON_MODE)
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
+            glBegin(GL_QUADS)
+            glColor3f(1, 0.6, 0.4)
+            glVertex3f(self.min_corner.x, self.min_corner.y, self.min_corner.z)
+            glVertex3f(self.max_corner.x, self.min_corner.y, self.min_corner.z)
+            glVertex3f(self.max_corner.x, self.max_corner.y, self.min_corner.z)
+            glVertex3f(self.min_corner.x, self.max_corner.y, self.min_corner.z)
 
-        glVertex3f(self.min_corner.x, self.min_corner.y, self.max_corner.z)
-        glVertex3f(self.max_corner.x, self.min_corner.y, self.max_corner.z)
-        glVertex3f(self.max_corner.x, self.max_corner.y, self.max_corner.z)
-        glVertex3f(self.min_corner.x, self.max_corner.y, self.max_corner.z)
+            glVertex3f(self.min_corner.x, self.min_corner.y, self.max_corner.z)
+            glVertex3f(self.max_corner.x, self.min_corner.y, self.max_corner.z)
+            glVertex3f(self.max_corner.x, self.max_corner.y, self.max_corner.z)
+            glVertex3f(self.min_corner.x, self.max_corner.y, self.max_corner.z)
 
-        glEnd()
+            glEnd()
 
-        glPopAttrib()
+            glPopAttrib()
 
-        glBegin(GL_LINES)
-        glVertex3f(self.min_corner.x, self.min_corner.y, self.min_corner.z)
-        glVertex3f(self.min_corner.x, self.min_corner.y, self.max_corner.z)
+            glBegin(GL_LINES)
+            glVertex3f(self.min_corner.x, self.min_corner.y, self.min_corner.z)
+            glVertex3f(self.min_corner.x, self.min_corner.y, self.max_corner.z)
 
-        glVertex3f(self.max_corner.x, self.min_corner.y, self.min_corner.z)
-        glVertex3f(self.max_corner.x, self.min_corner.y, self.max_corner.z)
+            glVertex3f(self.max_corner.x, self.min_corner.y, self.min_corner.z)
+            glVertex3f(self.max_corner.x, self.min_corner.y, self.max_corner.z)
 
-        glVertex3f(self.max_corner.x, self.max_corner.y, self.min_corner.z)
-        glVertex3f(self.max_corner.x, self.max_corner.y, self.max_corner.z)
+            glVertex3f(self.max_corner.x, self.max_corner.y, self.min_corner.z)
+            glVertex3f(self.max_corner.x, self.max_corner.y, self.max_corner.z)
 
-        glVertex3f(self.min_corner.x, self.max_corner.y, self.min_corner.z)
-        glVertex3f(self.min_corner.x, self.max_corner.y, self.max_corner.z)
+            glVertex3f(self.min_corner.x, self.max_corner.y, self.min_corner.z)
+            glVertex3f(self.min_corner.x, self.max_corner.y, self.max_corner.z)
 
-        glEnd()
+            glEnd()
 
 
 class AABB(CompositeObject):
@@ -969,9 +974,10 @@ class KDtree(CompositeObject):
         return tree
 
     def draw_gl(self):
-        self.box.draw_gl()
-        self.left.draw_gl()
-        self.right.draw_gl()
+        if not headless:
+            self.box.draw_gl()
+            self.left.draw_gl()
+            self.right.draw_gl()
 
 
 class Photon:
