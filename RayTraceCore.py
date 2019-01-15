@@ -11,7 +11,14 @@ except:
     print("NO MATPLOTLIB")
 
 from PIL import Image
-from tqdm import tqdm
+
+try:
+    from tqdm import tqdm
+except:
+    print("NO TQDM")
+    def tqdm(lst):
+        for x in lst:
+            yield x
 
 from PostProcessing import blend, blur, bloom
 from Shaders import *
