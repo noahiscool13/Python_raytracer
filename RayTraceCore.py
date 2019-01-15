@@ -27,6 +27,11 @@ from SceneObjects import *
 
 from math import *
 
+try:
+    from math import inf
+except:
+    inf = 10**99
+
 from multiprocessing import Pool
 
 from random import random

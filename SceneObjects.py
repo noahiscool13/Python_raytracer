@@ -3,6 +3,11 @@ from bisect import insort
 from MathUtil import *
 from math import *
 
+try:
+    from math import inf
+except:
+    inf = 10**99
+
 from copy import deepcopy
 
 try:
