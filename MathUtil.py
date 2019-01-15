@@ -69,7 +69,10 @@ class Vec2:
         return self * other
 
     def __str__(self):
-        return f"Vec2<{self.x} {self.y}>"
+        return "Vec2<{} {}>".format(self.x, self.y)
+
+        # no support for this on the HPC 10 cluster
+        #return f"Vec2<{self.x} {self.y}>"
 
     def __eq__(self, other):
         if abs(self.x - other.x) > EPSILON:
@@ -219,7 +222,10 @@ class Vec3:
         return self * other
 
     def __str__(self):
-        return f"Vec3<{self.x} {self.y} {self.z}>"
+        return "Vec3<{} {} {}>".format(self.x, self.y, self.z)
+
+        # no support for this on the HPC 10 cluster
+        #return f"Vec3<{self.x} {self.y} {self.z}>"
 
     def toList(self):
         return [self.x, self.y, self.z]
