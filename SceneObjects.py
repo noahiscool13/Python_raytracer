@@ -792,8 +792,11 @@ class KDtree(CompositeObject):
         found = set()
 
         while len(lst) < k:
-            hit = self.nearest_neighbour(pos, found, max_dist)
+            hit = self.nearest_neighbour(pos, found)
             if hit:
+                if hit.t > max_dist:
+                    return lst
+
                 found.add(hit.obj)
                 if hit.obj.in_plane(pos, normal):
                     lst.append(hit.obj)
@@ -990,6 +993,24 @@ class Photon:
         self.pos = pos
         self.col = col
         self.direction = direction
+
+    def __eq__(self, other):
+        if not isinstance(other, Photon):
+            return False
+
+        if self.pos != other.pos:
+            return False
+
+        if self.col != other.col:
+            return False
+
+        if self.direction != other.direction:
+            return False
+
+        return True
+
+    def __str__(self):
+        return f"Photon \n<pos:{self.pos}\ncol:{self.col}\ndirection:{self.direction}>"
 
     def box(self):
         return AAbox(self.pos, self.pos)

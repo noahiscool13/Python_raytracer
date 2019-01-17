@@ -51,7 +51,7 @@ def trace_with_photon_map(ray, scene):
     dist = inf
 
     for tree in scene.photon_map:
-        hit = tree.k_nearest_neighbours_plane(posHit,100,hit_object.normal(),max_dist=0.2)
+        hit = tree.k_nearest_neighbours_plane(posHit,100,hit_object.normal(), max_dist=0.2)
 
     col = Vec3(0.0)
 
@@ -101,7 +101,7 @@ def trace(ray, scene, depth):
     indirect_light = Vec3(0.0)
 
     if depth > 0:
-        bounce_direction = Vec3.point_on_hemisphere(normal)
+        bounce_direction = Vec3.point_on_diffuse_hemisphere(normal)
 
         bounce_ray = Ray(posHit, bounce_direction)
 
@@ -114,6 +114,7 @@ def trace(ray, scene, depth):
             bounce_light = trace(bounce_ray,scene, depth - 1)
 
             indirect_light += diffuse(normal, posHit, bounce_hit_pos, hit_object.material) * bounce_light
+            #indirect_light += direct(hit_object.material) * bounce_light
 
     # print(indirect_light)
 

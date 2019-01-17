@@ -218,6 +218,16 @@ class Vec3:
 
         return Vec3.point_on_hemisphere().rotated(normal)
 
+    @staticmethod
+    def point_on_diffuse_hemisphere(normal=None):
+        u = random()
+        v = 2 * pi *random()
+
+        if not normal:
+            return Vec3(cos(v) * sqrt(u), sin(v) * sqrt(u), sqrt(1-u))
+
+        return Vec3.point_on_hemisphere().rotated(normal)
+
     def __rmul__(self, other):
         return self * other
 

@@ -8,16 +8,16 @@ if __name__ == '__main__':
     with open("monte-carlo.senario") as file:
         parse_senario(file.read(), scene)
     scene.optimize_scene(amount=20)
-    # imgs = []
-    # for _ in range(1):
-    #     add_photon_map_to_scene(scene, 40000)
-    #     optimize_photon_map(scene, 50)
-    #     imgs.append(render(scene))
-    #
-    # img = clip(blend(imgs))
+    imgs = []
+    for _ in range(1):
+        add_photon_map_to_scene(scene, 8000)
+        optimize_photon_map(scene, 50)
+        imgs.append(render(scene))
 
-    img = render(scene, True)
+    img = clip(blend(imgs))
+
+    #img = render(scene, True)
 
     print(img)
-    #show_img(img)
+    show_img(img)
     save_img(img,"cornellBox3.png")

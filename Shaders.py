@@ -9,6 +9,10 @@ def ambiant(material, scene):
 def emittance(material):
     return material.Ke
 
+def direct(material):
+    return material.Kd
+
+
 def diffuse(normal, posHit, lightPos, material):
     lightDirection = (lightPos - posHit).unit()
     return max(lightDirection.dot(normal), 0) * material.Kd
