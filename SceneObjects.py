@@ -1010,7 +1010,7 @@ class Photon:
         return True
 
     def __str__(self):
-        return f"Photon \n<pos:{self.pos}\ncol:{self.col}\ndirection:{self.direction}>"
+        return f"Photon <\n pos: {self.pos}\n col: {self.col}\n direction: {self.direction}\n>"
 
     def box(self):
         return AAbox(self.pos, self.pos)
@@ -1171,7 +1171,7 @@ class PhotonBox:
             dist2 = obj.distance2(pos)
 
             if len(best_obj) < k:
-                best_obj.append(Hit(obj,sqrt(dist2)))
+                insort(best_obj, Hit(obj,sqrt(dist2)))
                 worst_pass_dist2 = max(worst_pass_dist2, dist2)
 
             elif dist2 < worst_pass_dist2:
