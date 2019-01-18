@@ -1171,7 +1171,7 @@ class PhotonBox:
             dist2 = obj.distance2(pos)
 
             if len(best_obj) < k:
-                best_obj.append(obj)
+                best_obj.append(Hit(obj,sqrt(dist2)))
                 worst_pass_dist2 = max(worst_pass_dist2, dist2)
 
             elif dist2 < worst_pass_dist2:
