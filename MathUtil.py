@@ -6,12 +6,34 @@ EPSILON = 0.00001
 
 
 def clip(val, lower=0.0, upper=1.0):
+    """
+    Clips val between lower and upper.
+
+    >>> clip(1, 0, 2)
+    1
+    >>> clip(2, 3, 6)
+    3
+    >>> clip(5, 1, 2)
+    2
+
+    Works recursively on lists.
+
+    >>> clip([-0.2, 0.5, 1.4, 0.7])
+    [0.0, 0.5, 1.0, 0.7]
+
+    :param val: value to be clipped
+    :param lower: lower bound
+    :param upper: upper bound
+    :return: val clipped between lower and upper
+    """
     if isinstance(val, list):
         return [clip(v, lower, upper) for v in val]
     return max(lower, min(upper, val))
 
-
 class Vec2:
+    """
+    Vector class with an X and Y component.
+    """
 
     def __init__(self, xx=None, yy=None):
         if xx is None:
@@ -89,6 +111,9 @@ class Vec2:
 
 
 class Vec3:
+    """
+    Vector class with an X, Y and Z component.
+    """
 
     def __init__(self, xx=None, yy=None, zz=None):
         if xx is None:
