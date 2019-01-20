@@ -68,15 +68,36 @@ class Vec2:
             self.y = yy
 
     def normalize(self):
+        """
+        Normalize self.
+
+        This will set the length of self to 1.
+
+        >>> v = Vec2(2, 0)
+        >>> v.normalize()
+        >>> v == Vec2(1, 0)
+        True
+
+        :return: None
+        """
         length = self.length()
         if length > 0:
             self.x /= length
             self.y /= length
 
     def unit(self):
+        """
+        Return normalized version of self.
+
+        >>> v = Vec2(0, 4)
+        >>> v.unit() == Vec2(0, 1)
+        True
+
+        :return: normalized version of self.
+        """
         length = self.length()
         if length > 0:
-            return Vec3(self.x / length, self.y / length)
+            return Vec2(self.x / length, self.y / length)
         return self
 
     def __mul__(self, other):
@@ -168,6 +189,18 @@ class Vec3:
             self.z = zz
 
     def normalize(self):
+        """
+        Normalize self.
+
+        This will set the length of self to 1.
+
+        >>> v = Vec3(2, 0, 0)
+        >>> v.normalize()
+        >>> v == Vec3(1, 0, 0)
+        True
+
+        :return: None
+        """
         length = self.length()
         if length > 0:
             self.x /= length
@@ -175,6 +208,15 @@ class Vec3:
             self.z /= length
 
     def unit(self):
+        """
+        Return normalized version of self.
+
+        >>> v = Vec3(0, 4, 0)
+        >>> v.unit() == Vec3(0, 1, 0)
+        True
+
+        :return: normalized version of self.
+        """
         length = self.length()
         if length > 0:
             return Vec3(self.x / length, self.y / length, self.z / length)
