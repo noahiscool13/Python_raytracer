@@ -101,12 +101,34 @@ class Vec2:
         return self
 
     def __mul__(self, other):
+        """
+        Element-wise Multiply self * other.
+
+        Can work for other Vec2 or scalar
+
+        >>> Vec2(2,4) * Vec2(3, 2) == Vec2(6, 8)
+        True
+        >>> Vec2(5,3) * 2 == Vec2(10, 6)
+        True
+
+        :param other: multiplicand
+        :return: self * other
+        """
         if isinstance(other, numbers.Number):
             return Vec2(self.x * other, self.y * other)
         elif isinstance(other, Vec2):
             return Vec2(self.x * other.x, self.y * other.y)
 
     def dot(self, other):
+        """
+        Return dot product of self and other.
+
+        >>> Vec2(3, 4).dot(Vec2(2, 3))
+        18
+
+        :param other: multiplicand
+        :return: self dot other
+        """
         return self.x * other.x + self.y * other.y
 
     def __sub__(self, other):
@@ -223,12 +245,34 @@ class Vec3:
         return Vec3(self)
 
     def __mul__(self, other):
+        """
+        Element-wise Multiply self * other.
+
+        Can work for other Vec3 or scalar
+
+        >>> Vec3(2, 4, 3) * Vec3(3, 2, 1) == Vec3(6, 8, 3)
+        True
+        >>> Vec3(5, 3, 4) * 2 == Vec3(10, 6, 8)
+        True
+
+        :param other: multiplicand
+        :return: self * other
+        """
         if isinstance(other, numbers.Number):
             return Vec3(self.x * other, self.y * other, self.z * other)
         elif isinstance(other, Vec3):
             return Vec3(self.x * other.x, self.y * other.y, self.z * other.z)
 
     def dot(self, other):
+        """
+        Return dot product of self and other.
+
+        >>> Vec3(3, 4, 2).dot(Vec3(2, 3, 1))
+        20
+
+        :param other: multiplicand
+        :return: self dot other
+        """
         return self.x * other.x + self.y * other.y + self.z * other.z
 
     def __sub__(self, other):
