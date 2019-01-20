@@ -30,12 +30,28 @@ def clip(val, lower=0.0, upper=1.0):
         return [clip(v, lower, upper) for v in val]
     return max(lower, min(upper, val))
 
+
 class Vec2:
     """
     Vector class with an X and Y component.
     """
 
     def __init__(self, xx=None, yy=None):
+        """
+        Initialize Vec2 object.
+
+        If xx or yy is not filled in, they will be initialized as follows:
+
+        >>> Vec2() == Vec2(0, 0)
+        True
+        >>> Vec2(1) == Vec2(1, 1)
+        True
+        >>> Vec2(2, 3) == Vec2(2, 3)
+        True
+
+        :param xx: X coordinate of the vector.
+        :param yy: Y coordinate of the vector.
+        """
         if xx is None:
             self.x = 0
             self.y = 0
@@ -116,6 +132,22 @@ class Vec3:
     """
 
     def __init__(self, xx=None, yy=None, zz=None):
+        """
+                Initialize Vec3 object.
+
+                If xx or (yy and zz) is not filled in, they will be initialized as follows:
+
+                >>> Vec3() == Vec3(0, 0, 0)
+                True
+                >>> Vec3(1) == Vec3(1, 1, 1)
+                True
+                >>> Vec3(2, 3, 4) == Vec3(2, 3, 4)
+                True
+
+                :param xx: X coordinate of the vector.
+                :param yy: Y coordinate of the vector.
+                :param zz: Z coordinate of the vector.
+                """
         if xx is None:
             self.x = 0
             self.y = 0
