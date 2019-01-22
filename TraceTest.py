@@ -10,8 +10,8 @@ if __name__ == '__main__':
     scene.optimize_scene(amount=20)
     imgs = []
     for _ in range(1):
-        add_photon_map_to_scene(scene, 8000)
-        optimize_photon_map(scene, 50)
+        #add_photon_map_to_scene(scene, 100000)
+        #optimize_photon_map(scene, 50)
         imgs.append(render(scene))
 
     img = clip(blend(imgs))

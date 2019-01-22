@@ -711,6 +711,75 @@ class AABB(CompositeObject):
         self.box.draw_gl()
 
 
+class LeftKDTree:
+    def __init__(self, node, left=None, right=None, split=None):
+        self.node = node
+        self.left = left
+        self.right = right
+        self.split = split
+
+    @staticmethod
+    def build(box):
+        longest_axis = box.box.longest_axis()
+
+        if longest_axis == 0:
+            box.photons.sort(key=lambda photon: photon.pos.x)
+        elif longest_axis == 1:
+            box.photons.sort(key=lambda photon: photon.pos.y)
+        elif longest_axis == 2:
+            box.photons.sort(key=lambda photon: photon.pos.z)
+
+        photon_len = len(box.photons)
+
+        if photon_len == 0:
+            return None
+
+        if photon_len == 1:
+            return LeftKDTree(box.photons[0])
+
+        median = photon_len // 2
+
+        left = box.photons[:median]
+        right = box.photons[median+1:]
+
+        if longest_axis == 0:
+            left_box = deepcopy(box.box)
+            right_box = deepcopy(box.box)
+
+            middle_x = box.photons[median].pos.x
+
+            left_box.max_corner.x = middle_x
+            right_box.min_corner.x = middle_x
+
+        elif longest_axis == 1:
+            left_box = deepcopy(box.box)
+            right_box = deepcopy(box.box)
+
+            middle_y = box.photons[median].pos.y
+
+            left_box.max_corner.y = middle_y
+            right_box.min_corner.y = middle_y
+
+        elif longest_axis == 2:
+            left_box = deepcopy(box.box)
+            right_box = deepcopy(box.box)
+
+            middle_z = box.photons[median].pos.z
+
+            left_box.max_corner.z = middle_z
+            right_box.min_corner.z = middle_z
+
+        leftBox = PhotonBox(PhotonList(left), left_box)
+        rightBox = PhotonBox(PhotonList(right), right_box)
+
+        tree = LeftKDTree(box.photons[median], split=longest_axis)
+
+        tree.left = LeftKDTree.build(leftBox)
+        tree.right = LeftKDTree.build(rightBox)
+
+        return tree
+
+
 class KDtree(CompositeObject):
     def __init__(self, depth, box):
         self.depth = depth
@@ -1012,6 +1081,9 @@ class Photon:
     def __str__(self):
         return f"Photon <\n pos: {self.pos}\n col: {self.col}\n direction: {self.direction}\n>"
 
+    def __hash__(self) -> int:
+        return hash(self.pos) ^ hash(self.col) ^ hash(self.direction)
+
     def box(self):
         return AAbox(self.pos, self.pos)
 
@@ -1035,7 +1107,7 @@ class Photon:
         return normal.dot(ax) < margin
 
     @staticmethod
-    def generate_random_on_object(obj, power):
+    def generate_random_on_object(obj, power, dist = 0):
         if isinstance(obj, Triangle):
             obj_normal = obj.normal()
             pos = obj.random_point_on_surface() + obj_normal * EPSILON
@@ -1043,10 +1115,10 @@ class Photon:
             direction = Vec3.point_on_hemisphere(obj.normal())
             col = obj.material.Ke * power
 
-            return Photon(pos, col, direction)
+            return Photon(pos+direction*dist, col, direction)
 
     def forward(self, scene, depth):
-        if depth > 1:
+        if depth > 0:
             ray = Ray(self.pos, self.direction)
 
             bounce = ray.intersect(scene)
@@ -1076,7 +1148,7 @@ class Photon:
 
                     bounce_photon = Photon(bounce_pos, self.col, Vec3.point_on_hemisphere(bounce_object.normal()))
 
-                    return [self] + bounce_photon.forward(scene, depth-1)
+                    return [bounce_photon] + bounce_photon.forward(scene, depth-1)
 
                 elif rnd < propability_difuse + propability_specular:
                     # TODO Add specular bounce
@@ -1085,7 +1157,7 @@ class Photon:
                 else:
                     self.col /= (1-propability_reflection)
                     self.col *= bounce_object.material.Kd
-                    return [self]
+                    return [Photon(bounce_pos, self.col, Vec3.point_on_hemisphere(bounce_object.normal()))]
 
         return []
 

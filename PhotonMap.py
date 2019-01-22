@@ -1,4 +1,5 @@
 from math import floor
+from MathUtil import *
 
 from SceneObjects import KDtree, CompositeObject, Light, Triangle, Photon, Ray, PhotonList, PhotonBox
 from objParser import parse_obj, parse_senario
@@ -51,9 +52,9 @@ def create_photon_map(scene, global_photons):
             for _ in range(emitable_photons):
                 power_per_photon = 1/emitable_photons*obj.material.Ke.length() * obj.area()
 
-                photon = Photon.generate_random_on_object(obj, power_per_photon)
+                photon = Photon.generate_random_on_object(obj, power_per_photon, EPSILON)
 
-                photon_bounces += photon.forward(scene, 10)
+                photon_bounces += photon.forward(scene, 2)
 
     return photon_bounces
 

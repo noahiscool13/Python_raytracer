@@ -51,7 +51,7 @@ def trace_with_photon_map(ray, scene):
     dist = inf
 
     for tree in scene.photon_map:
-        hit = tree.k_nearest_neighbours_plane(posHit,100,hit_object.normal(), max_dist=0.2)
+        hit = tree.k_nearest_neighbours_plane(posHit,42,hit_object.normal(), max_dist=0.2)
 
     col = Vec3(0.0)
 
@@ -134,7 +134,7 @@ def render_row(settings):
             raydir = Vec3(xx, yy, -1)
             raydir.normalize()
             ray = Ray(settings.scene.camera.point.pos, raydir)
-            col += trace(ray, settings.scene, 3)
+            col += trace(ray, settings.scene, 2)
         col /= settings.ss
         t[1].append(col.toList())
     return t
