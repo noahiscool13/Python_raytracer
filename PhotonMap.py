@@ -5,39 +5,11 @@ from SceneObjects import KDtree, CompositeObject, Light, Triangle, Photon, Ray, 
 from objParser import parse_obj, parse_senario
 
 
-def all_emittors(scene):
-    emittors = []
 
-    for light in scene.lights:
-        emittors.append(light)
-
-    for obj in scene.objects:
-        if isinstance(obj, CompositeObject):
-            for objc in obj.objects:
-                if objc.material.Ke.length2() > 0:
-                    emittors.append(objc)
-        else:
-            if obj.material.Ke > 0:
-                emittors.append(obj)
-
-    return emittors
-
-
-def total_light(emittors):
-    total = 0
-
-    for obj in emittors:
-        if isinstance(obj, Light):
-            total += obj.color.length()
-
-        elif isinstance(obj, Triangle):
-            total += obj.material.Ke.length() * obj.area()
-
-    return total
 
 
 def create_photon_map(scene, global_photons):
-    emittors = all_emittors(scene)
+    emittors = scene.all_emittors()
 
     total_light_in_scene = total_light(emittors)
 

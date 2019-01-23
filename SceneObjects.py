@@ -1,4 +1,4 @@
-from random import random, uniform
+from random import random, uniform, choices
 from bisect import insort
 from MathUtil import *
 from math import *
@@ -339,6 +339,11 @@ class Scene:
         self.camera = camera
         self.points = points
         self.ambiant_light = ambiant_light
+        self.emitters_set = False
+        self.emitters = None
+        self.total_light_set = False
+        self.total_light_val = None
+        self.light_powers = []
 
     def calc_vertex_normals(self):
         for shape in self.objects:
@@ -356,9 +361,60 @@ class Scene:
 
             self.objects = [KDtree.build(amount, box, root=True)]
 
+    def all_emittors(self):
+        if self.emitters_set:
+            return self.emitters
+        else:
+            emittors = []
+
+            for light in self.lights:
+                emittors.append(light)
+
+            for obj in self.objects:
+                if isinstance(obj, CompositeObject):
+                    for objc in obj.objects:
+                        if objc.material.Ke.length2() > 0:
+                            emittors.append(objc)
+                else:
+                    if obj.material.Ke.length2() > 0:
+                        emittors.append(obj)
+
+            self.emitters = emittors
+            self.emitters_set = True
+
+            return emittors
+
+    def total_light(self):
+        if self.total_light_set:
+            return self.total_light_val
+
+        else:
+            total = 0
+
+            for obj in self.all_emittors():
+                if isinstance(obj, Light):
+                    total += obj.color.length()
+                    self.light_powers.append(obj.color.length())
+
+                elif isinstance(obj, Triangle):
+                    total += obj.material.Ke.length() * obj.area()
+                    self.light_powers.append(obj.material.Ke.length() * obj.area())
+
+            self.total_light_set = True
+            self.total_light_val = total
+
+            return total
+
+    def random_weighted_light(self):
+        self.total_light()
+
+        # TODO change to cum_weights, that should be faster
+        return choices(population=self.all_emittors(), weights=self.light_powers, k=1)[0]
+
+
 
 class RowSettings:
-    def __init__(self, scene, width=8, height=4, fov=30, row=0, ss=4):
+    def __init__(self, scene, width=8, height=4, fov=30, row=0, ss=4, mode="recursive"):
         self.scene = scene
         self.width = width
         self.height = height
@@ -369,6 +425,7 @@ class RowSettings:
         self.angle = tan(pi * 0.5 * fov / 180)
         self.row = row
         self.ss = ss
+        self.mode = mode
 
 
 class AAbox:
