@@ -91,17 +91,23 @@ def trace_direct(ray, scene):
 
     if isinstance(light, Light):
 
+        chance = light.color.length()/scene.total_light()
+
         light.random_translate()
 
         if check_if_visable(posHit, light.pos, hit_object, scene.objects):
-            direct_light += diffuse(normal, posHit, light.pos, hit_object.material) * light.color
-            direct_light += specular(normal, posHit, light.pos, ray.origin, hit_object.material) * light.color
+            light_color = light.color / ((posHit-light.pos).length2() * 4 * pi) / chance
+
+            direct_light += diffuse(normal, posHit, light.pos, hit_object.material) * light_color
+            direct_light += specular(normal, posHit, light.pos, ray.origin, hit_object.material) * light_color
 
     elif isinstance(light, Triangle):
         random_surface_point = light.random_point_on_surface()
-        triangle_color = light.area()/(((posHit-random_surface_point).length()**2)*2*pi) * light.material.Ke
 
         if check_if_visable(posHit, random_surface_point, hit_object, scene.objects):
+            triangle_color = light.area() / (
+                        (posHit - random_surface_point).length2() * 2 * pi) * light.material.Ke
+
             direct_light += diffuse(normal, posHit, random_surface_point, hit_object.material) * triangle_color
             direct_light += specular(normal, posHit, random_surface_point, ray.origin, hit_object.material) * triangle_color
 
