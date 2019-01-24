@@ -13,7 +13,7 @@ def direct(material):
     return material.Kd
 
 
-def diffuse(normal, posHit, lightPos, material):
+def diffuse(normal, posHit, lightPos, material = Material(Kd=Vec3(1))):
     lightDirection = (lightPos - posHit).unit()
     return max(lightDirection.dot(normal), 0) * material.Kd
 

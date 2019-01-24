@@ -108,7 +108,7 @@ def trace_direct(ray, scene):
             chance = light.material.Ke.length() * light.area() / scene.total_light()
 
             triangle_color = light.area() / (
-                        (posHit - random_surface_point).length2() * 2 * pi) * light.material.Ke/chance
+                        (posHit - random_surface_point).length2() * 2 * pi) * light.material.Ke/chance * diffuse(light.normal(), random_surface_point, posHit)
 
             direct_light += diffuse(normal, posHit, random_surface_point, hit_object.material) * triangle_color
             direct_light += specular(normal, posHit, random_surface_point, ray.origin, hit_object.material) * triangle_color
