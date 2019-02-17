@@ -35,7 +35,7 @@ class Hit:
 
 
 class Material:
-    def __init__(self, Ka = Vec3(0.2), Kd=Vec3(), Ks=Vec3(), Ke  = Vec3(), Ni = 1, d = 1, Ns=2, smoothNormal=False):
+    def __init__(self, Ka = Vec3(0.2), Kd=Vec3(0), Ks=Vec3(0), Ke  = Vec3(), Ni = 1, d = 1, Ns=2, smoothNormal=False):
         self.Ka = Ka
         self.Kd = Kd
         self.Ks = Ks
@@ -393,12 +393,12 @@ class Scene:
 
             for obj in self.all_emittors():
                 if isinstance(obj, Light):
-                    total += obj.color.length()
-                    self.light_powers.append(obj.color.length())
+                    total += obj.color.avg()
+                    self.light_powers.append(obj.color.avg())
 
                 elif isinstance(obj, Triangle):
-                    total += obj.material.Ke.length() * obj.area()
-                    self.light_powers.append(obj.material.Ke.length() * obj.area())
+                    total += obj.material.Ke.avg() * obj.area()
+                    self.light_powers.append(obj.material.Ke.avg() * obj.area())
 
             self.total_light_set = True
             self.total_light_val = total
@@ -1188,30 +1188,36 @@ class Photon:
                 bounce_ds_g = bounce_object.material.Kd.y + bounce_object.material.Ks.y
                 bounce_ds_b = bounce_object.material.Kd.z + bounce_object.material.Ks.z
 
-                object_Kd = bounce_object.material.Kd.length()
-                object_Ks = bounce_object.material.Ks.length()
+                object_Kd = bounce_object.material.Kd.avg()
+                object_Ks = bounce_object.material.Ks.avg()
 
                 propability_reflection = max(bounce_ds_r, bounce_ds_g, bounce_ds_b)
 
                 propability_difuse = object_Kd/(object_Kd+object_Ks)*propability_reflection
 
+
                 propability_specular = propability_reflection - propability_difuse
 
                 rnd = random()
 
+                print(propability_difuse)
+
                 if rnd < propability_difuse:
+
                     self.col /= propability_difuse
                     self.col *= bounce_object.material.Kd
 
-                    bounce_photon = Photon(bounce_pos, self.col, Vec3.point_on_hemisphere(bounce_object.normal()))
+                    bounce_photon = Photon(deepcopy(bounce_pos), deepcopy(self.col), Vec3.point_on_hemisphere(bounce_object.normal()))
 
-                    return [bounce_photon] + bounce_photon.forward(scene, depth-1)
+                    #return bounce_photon.forward(scene, depth-1)
+                    return [deepcopy(bounce_photon)] + bounce_photon.forward(scene, depth - 1)
 
                 elif rnd < propability_difuse + propability_specular:
                     # TODO Add specular bounce
                     pass
 
                 else:
+
                     self.col /= (1-propability_reflection)
                     self.col *= bounce_object.material.Kd
                     return [Photon(bounce_pos, self.col, Vec3.point_on_hemisphere(bounce_object.normal()))]

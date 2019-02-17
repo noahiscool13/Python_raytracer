@@ -153,7 +153,7 @@ class Vec2:
         return "Vec2<{} {}>".format(self.x, self.y)
 
         # no support for this on the HPC 10 cluster
-        #return f"Vec2<{self.x} {self.y}>"
+        # return f"Vec2<{self.x} {self.y}>"
 
     def __eq__(self, other):
         if abs(self.x - other.x) > EPSILON:
@@ -163,10 +163,10 @@ class Vec2:
         return True
 
     def distance(self, other):
-        return (self-other).length()
+        return (self - other).length()
 
     def distance2(self, other):
-        return (self-other).length2()
+        return (self - other).length2()
 
 
 class Vec3:
@@ -315,9 +315,9 @@ class Vec3:
 
     def rotate(self, rotation):
         if abs(rotation.x) > rotation.y:
-            Nt = Vec3(rotation.z,0,-rotation.x) / sqrt(rotation.x**2 + rotation.z**2)
+            Nt = Vec3(rotation.z, 0, -rotation.x) / sqrt(rotation.x ** 2 + rotation.z ** 2)
         else:
-            Nt = Vec3(0,-rotation.z, rotation.y) / sqrt(rotation.y**2 + rotation.z**2)
+            Nt = Vec3(0, -rotation.z, rotation.y) / sqrt(rotation.y ** 2 + rotation.z ** 2)
 
         Nb = rotation.cross_product(Nt)
 
@@ -333,9 +333,9 @@ class Vec3:
 
     def rotated(self, rotation):
         if abs(rotation.x) > abs(rotation.y):
-            Nt = Vec3(rotation.z,0,-rotation.x) / sqrt(rotation.x**2 + rotation.z**2)
+            Nt = Vec3(rotation.z, 0, -rotation.x) / sqrt(rotation.x ** 2 + rotation.z ** 2)
         else:
-            Nt = Vec3(0,-rotation.z, rotation.y) / sqrt(rotation.y**2 + rotation.z**2)
+            Nt = Vec3(0, -rotation.z, rotation.y) / sqrt(rotation.y ** 2 + rotation.z ** 2)
 
         Nb = rotation.cross_product(Nt)
 
@@ -346,28 +346,28 @@ class Vec3:
         return Vec3(x, y, z)
 
     def distance(self, other):
-        return (self-other).length()
+        return (self - other).length()
 
     def distance2(self, other):
-        return (self-other).length2()
+        return (self - other).length2()
 
     @staticmethod
-    def point_on_hemisphere(normal = None):
-        theta = random()*2*pi
-        phi = acos(1-2*random())
+    def point_on_hemisphere(normal=None):
+        theta = random() * 2 * pi
+        phi = acos(1 - 2 * random())
 
         if not normal:
-            return Vec3(sin(phi)*cos(theta), abs(sin(phi) * sin(theta)), cos(phi))
+            return Vec3(sin(phi) * cos(theta), abs(sin(phi) * sin(theta)), cos(phi))
 
         return Vec3.point_on_hemisphere().rotated(normal)
 
     @staticmethod
     def point_on_diffuse_hemisphere(normal=None):
         u = random()
-        v = 2 * pi *random()
+        v = 2 * pi * random()
 
         if not normal:
-            return Vec3(cos(v) * sqrt(u), sin(v) * sqrt(u), sqrt(1-u))
+            return Vec3(cos(v) * sqrt(u), sin(v) * sqrt(u), sqrt(1 - u))
 
         return Vec3.point_on_hemisphere().rotated(normal)
 
@@ -378,7 +378,7 @@ class Vec3:
         return "Vec3<{} {} {}>".format(self.x, self.y, self.z)
 
         # no support for this on the HPC 10 cluster
-        #return f"Vec3<{self.x} {self.y} {self.z}>"
+        # return f"Vec3<{self.x} {self.y} {self.z}>"
 
     def toList(self):
         return [self.x, self.y, self.z]
@@ -399,3 +399,6 @@ class Vec3:
 
     def __hash__(self):
         return hash((self.x, self.y, self.z))
+
+    def avg(self):
+        return (self.x + self.y + self.z) / 3

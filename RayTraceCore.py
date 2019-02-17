@@ -60,9 +60,24 @@ def trace_with_photon_map(ray, scene):
         for p in hit:
 
             #col += p.col / (dist_to_photon * pi) / 150
-            col += p.col / (dist_to_photon*pi)/15
+            col += p.col / (dist_to_photon**2*pi) / 100
 
     return col
+
+def trace_with_photon_map_indirect(ray, scene):
+    hit = ray.intersect(scene)
+
+    if not hit:
+        return Vec3(0.0)
+
+    hit_object, hit_t = hit.obj, hit.t
+
+    posHit = ray.after(hit_t - EPSILON)
+
+    new_dir = Vec3.point_on_hemisphere(hit_object.normal())
+
+    return trace_with_photon_map(Ray(posHit, new_dir), scene)
+
 
 def trace_direct(ray, scene):
     hit = ray.intersect(scene)
@@ -117,7 +132,7 @@ def trace_direct(ray, scene):
 
 def trace(ray, scene, depth):
     if hasattr(scene, "photon_map"):
-        return trace_with_photon_map(ray, scene)
+        return trace_with_photon_map_indirect(ray, scene)
 
     hit = ray.intersect(scene)
 
@@ -206,7 +221,7 @@ def render(scene, doClip = False, mode="recursive"):
 
     for y in range(0, height):
         row_list.append(RowSettings(scene, width=width, height=height, row=y, ss=scene.ss, mode=mode))
-    with Pool(8) as p:
+    with Pool(7) as p:
         img = list(tqdm(p.imap(render_row, row_list), total=height))
 
     img = sorted(img)
