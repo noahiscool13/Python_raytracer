@@ -60,7 +60,7 @@ def trace_with_photon_map(ray, scene):
         for p in hit:
 
             #col += p.col / (dist_to_photon * pi) / 150
-            col += p.col / (dist_to_photon**2*pi) / 100
+            col += p.col / (dist_to_photon**2*pi)
 
     return col
 
@@ -141,7 +141,7 @@ def trace(ray, scene, depth):
 
     hit_object, hit_t = hit.obj, hit.t
 
-    posHit = ray.after(hit.t-EPSILON)
+    posHit = ray.after(hit_t-EPSILON)
 
     if hit_object.material.smoothNormal:
         u, v = ray.intersect_uv(hit_object)
@@ -199,7 +199,7 @@ def render_row(settings):
             xx = (2 * ((x + x_offset + 0.5) * settings.invWidth) - 1) * settings.angle * settings.aspectratio
             yy = (1 - 2 * ((y + y_offset + 0.5) * settings.invHeight)) * settings.angle
 
-            raydir = Vec3(xx, yy, -1)
+            raydir = Vec3(xx, yy, -1).rotated(Vec3(0,1,-0.2))
             raydir.normalize()
             ray = Ray(settings.scene.camera.point.pos, raydir)
 

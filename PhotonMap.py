@@ -1,11 +1,35 @@
 from math import floor
 from MathUtil import *
 
-from SceneObjects import KDtree, CompositeObject, Light, Triangle, Photon, Ray, PhotonList, PhotonBox
+from SceneObjects import KDtree, CompositeObject, Light, Triangle, Photon, Ray, PhotonList, PhotonBox, AAbox
 from objParser import parse_obj, parse_senario
 
 
+class PhotonMap:
+    def __init__(self, max_photons):
+        self.stored_photons = 0
+        self.max_photons = max_photons
 
+        self.photons = []
+
+        self.box = AAbox.large_box()
+
+    def irradiance_estimate(self, pos, normal, max_dist, n_photons):
+        iradiance = Vec3()
+
+        nearest_photons = self.locate_photons(pos, n_photons, max_dist)
+
+    def locate_photons(self, pos, n_photons, max_dist):
+        dists = [0]*(n_photons+1)
+        indexes = [0] * (n_photons + 1)
+        dist2 = max_dist**2
+
+    def balance(self):
+        if self.stored_photons>1:
+            pass
+
+    def balance_segment(self):
+        pass
 
 
 def create_photon_map(scene, global_photons):

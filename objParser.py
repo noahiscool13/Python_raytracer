@@ -97,7 +97,10 @@ def parse_obj(data):
 
                 for p in range(1,len(r)):
                     ps = r[p].split("/")
-                    face_points.append(scene.points[int(ps[0]) - 1])
+                    try:
+                        face_points.append(scene.points[int(ps[0]) - 1])
+                    except:
+                        pass
 
                     if len(ps) > 1:
                         pass

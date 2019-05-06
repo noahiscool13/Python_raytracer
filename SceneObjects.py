@@ -1202,10 +1202,11 @@ class Photon:
 
                 print(propability_difuse)
 
-                if rnd < propability_difuse:
+                if rnd < 0.5:
 
-                    self.col /= propability_difuse
+                    self.col /= 0.5
                     self.col *= bounce_object.material.Kd
+                    self.col /= pi*2
 
                     bounce_photon = Photon(deepcopy(bounce_pos), deepcopy(self.col), Vec3.point_on_hemisphere(bounce_object.normal()))
 
@@ -1219,7 +1220,7 @@ class Photon:
                 else:
 
                     self.col /= (1-propability_reflection)
-                    self.col *= bounce_object.material.Kd
+                    self.col *= bounce_object.material.Kd/ (pi*2)
                     return [Photon(bounce_pos, self.col, Vec3.point_on_hemisphere(bounce_object.normal()))]
 
         return []

@@ -13,13 +13,13 @@ from RayTraceCore import *
 
 def main():
     pygame.init()
-    display = (800, 800)
+    display = (400, 400)
     pygame.display.set_mode(display, DOUBLEBUF | OPENGL)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
     glEnable(GL_BLEND)
     glEnable(GL_DEPTH_TEST)
 
-    gluPerspective(30, (display[0] / display[1]), 0.1, 50.0)
+    gluPerspective(30, (display[0] / display[1]), 0.1, 100.0)
 
     glTranslatef(*-scene.camera.point.pos)
 
@@ -101,9 +101,9 @@ def main():
 
 
 if __name__ == "__main__":
-    with open("monte-carlo.obj", "r") as file:
+    with open("house_test.obj", "r") as file:
         scene = parse_obj(file.read())
-    with open("monte-carlo.senario") as file:
+    with open("tree_obj.senario") as file:
         parse_senario(file.read(), scene)
     objects = scene.objects
     lights = scene.lights

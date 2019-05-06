@@ -3,9 +3,9 @@ from objParser import *
 from RayTraceCore import *
 
 if __name__ == '__main__':
-    with open("monte-carlo.obj", "r") as file:
+    with open("house_test.obj", "r") as file:
         scene = parse_obj(file.read())
-    with open("monte-carlo.senario") as file:
+    with open("tree_obj.senario") as file:
         parse_senario(file.read(), scene)
 
     # with open("teapot.obj", "r") as file:
@@ -16,8 +16,8 @@ if __name__ == '__main__':
 
     imgs = []
     for _ in range(1):
-        add_photon_map_to_scene(scene, 4)
-        optimize_photon_map(scene, 50)
+        #add_photon_map_to_scene(scene, 1000)
+        #optimize_photon_map(scene, 50)
         #imgs.append(render(scene, mode="direct"))
         imgs.append(render(scene))
 
@@ -29,4 +29,4 @@ if __name__ == '__main__':
 
     print(img)
     show_img(img)
-    save_img(img,"cornellBox3.png")
+    save_img(img,"house1.png")
