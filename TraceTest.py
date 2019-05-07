@@ -27,6 +27,6 @@ if __name__ == '__main__':
 
     #img = render(scene, True)
 
-    print(img)
+    #print(img)
     show_img(img)
     save_img(img,"house1.png")

@@ -168,6 +168,9 @@ class Vec2:
     def distance2(self, other):
         return (self - other).length2()
 
+    def toList(self):
+        return [self.x, self.y]
+
 
 class Vec3:
     """

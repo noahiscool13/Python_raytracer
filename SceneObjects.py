@@ -1,18 +1,22 @@
-from random import random, uniform, choices
 from bisect import insort
-from MathUtil import *
 from math import *
+from random import uniform, choices
+
+from PIL import Image
+
+from MathUtil import *
 
 try:
     from math import inf
 except:
-    inf = 10**99
+    inf = 10 ** 99
 
 from copy import deepcopy
 
 try:
     from OpenGL.GL import *
     from OpenGL.GLU import *
+
     headless = False
 except:
     headless = True
@@ -34,8 +38,39 @@ class Hit:
         return self.t < other.t
 
 
+class Texture:
+    def __init__(self, image):
+        self.image = Image.open(image).transpose(Image.FLIP_TOP_BOTTOM)
+        self.width, self.height = self.image.size
+
+    def get_value(self, u, v):
+        # print(int(u * self.width), int(v * self.height))
+        rgba = self.image.getpixel((int(u * self.width), int(v * self.height)))
+        rgb = list(rgba)[:3]
+        return Vec3(*rgb)/255
+
+
+class TexUV:
+    def __init__(self, a, b, c):
+        self.base = a
+        self.u = b-a
+        self.v = c-a
+
+
+class TextureCoordinate:
+    def __init__(self, coordinates):
+        self.coordinates = coordinates
+
+    def __eq__(self, other):
+        return self.coordinates == other.coordinates
+
+    def toList(self):
+        return self.coordinates.toList()
+
+
 class Material:
-    def __init__(self, Ka = Vec3(0.2), Kd=Vec3(0), Ks=Vec3(0), Ke  = Vec3(), Ni = 1, d = 1, Ns=2, smoothNormal=False):
+    def __init__(self, Ka=Vec3(0.2), Kd=Vec3(0), Ks=Vec3(0), Ke=Vec3(), Ni=1,
+                 d=1, Ns=2, smoothNormal=False, map_kd=None):
         self.Ka = Ka
         self.Kd = Kd
         self.Ks = Ks
@@ -43,6 +78,7 @@ class Material:
         self.Ni = Ni
         self.d = d
         self.Ns = Ns
+        self.map_Kd = map_kd
         self.smoothNormal = smoothNormal
 
 
@@ -234,11 +270,12 @@ class Ray:
 
 
 class Triangle():
-    def __init__(self, a, b, c, material=Material()):
+    def __init__(self, a, b, c, material=Material(), tex_uv=None):
         self.a = a
         self.b = b
         self.c = c
         self.material = material
+        self.tex_uv = tex_uv
 
     def add_norm_to_vertices(self):
         norm = self.un_normalized_normal()
@@ -260,7 +297,7 @@ class Triangle():
         return "Triangle<{} {} {}".format(self.a, self.b, self.c)
 
         # no support for this on the HPC 10 cluster
-        #return f"Triangle<{self.a} {self.b} {self.c}>"
+        # return f"Triangle<{self.a} {self.b} {self.c}>"
 
     def toList(self):
         return [self.a.toList(), self.b.toList(), self.c.toList()]
@@ -288,9 +325,9 @@ class Triangle():
         edge1 = self.b.pos - self.a.pos
         edge2 = self.c.pos - self.a.pos
 
-        cross =  edge1.cross_product(edge2)
+        cross = edge1.cross_product(edge2)
         double_area = cross.length()
-        return double_area/2
+        return double_area / 2
 
     def random_point_on_surface(self):
         edge1 = self.b.pos - self.a.pos
@@ -299,12 +336,11 @@ class Triangle():
         a = 1
         b = 1
 
-        while a+b > 1:
+        while a + b > 1:
             a = random()
             b = random()
 
         return self.a.pos + edge1 * a + edge2 * b
-
 
 
 class Light:
@@ -315,16 +351,15 @@ class Light:
         self.softness = softness
 
     def random_translate(self):
-        self.pos = self.true_pos + Vec3((random()-0.5)*self.softness,
-                                        (random()-0.5)*self.softness,
-                                        (random()-0.5)*self.softness)
+        self.pos = self.true_pos + Vec3((random() - 0.5) * self.softness,
+                                        (random() - 0.5) * self.softness,
+                                        (random() - 0.5) * self.softness)
 
     def __str__(self):
         return "Light<{} {}>".format(self.pos, self.color)
 
-
         # no support for this on the HPC 10 cluster
-        #return f"Light<{self.pos} {self.color}>"
+        # return f"Light<{self.pos} {self.color}>"
 
 
 class Camera:
@@ -333,7 +368,8 @@ class Camera:
 
 
 class Scene:
-    def __init__(self, triangles=[], points=[], lights=[], camera=None, ambiant_light = Vec3(1)):
+    def __init__(self, triangles=[], points=[], lights=[], camera=None,
+                 ambiant_light=Vec3(1)):
         self.objects = triangles
         self.lights = lights
         self.camera = camera
@@ -409,12 +445,15 @@ class Scene:
         self.total_light()
 
         # TODO change to cum_weights, that should be faster
-        return choices(population=self.all_emittors(), weights=self.light_powers, k=1)[0]
-
+        return \
+            choices(population=self.all_emittors(), weights=self.light_powers,
+                    k=1)[
+                0]
 
 
 class RowSettings:
-    def __init__(self, scene, width=8, height=4, fov=30, row=0, ss=4, mode="recursive"):
+    def __init__(self, scene, width=8, height=4, fov=30, row=0, ss=4,
+                 mode="recursive"):
         self.scene = scene
         self.width = width
         self.height = height
@@ -429,7 +468,7 @@ class RowSettings:
 
 
 class AAbox:
-    def __init__(self, min_corner = None, max_corner = None):
+    def __init__(self, min_corner=None, max_corner=None):
         self.min_corner = min_corner
         self.max_corner = max_corner
 
@@ -521,47 +560,55 @@ class AAbox:
 
                 # 2
                 if pos.x < self.max_corner.x:
-                    return Vec2(pos.y, pos.z).distance(Vec2(self.min_corner.y, self.min_corner.z))
+                    return Vec2(pos.y, pos.z).distance(
+                        Vec2(self.min_corner.y, self.min_corner.z))
 
                 # 3
-                return Vec3(self.max_corner.x, self.min_corner.y, self.min_corner.z).distance(pos)
+                return Vec3(self.max_corner.x, self.min_corner.y,
+                            self.min_corner.z).distance(pos)
 
             if pos.y < self.max_corner.y:
                 # 4
                 if pos.x < self.min_corner.x:
-                    return Vec2(pos.x, pos.z).distance(Vec2(self.min_corner.x, self.min_corner.z))
+                    return Vec2(pos.x, pos.z).distance(
+                        Vec2(self.min_corner.x, self.min_corner.z))
 
                 # 5
                 if pos.x < self.max_corner.x:
                     return self.min_corner.z - pos.z
 
                 # 6
-                return Vec2(pos.x, pos.z).distance(Vec2(self.max_corner.x, self.min_corner.z))
-
+                return Vec2(pos.x, pos.z).distance(
+                    Vec2(self.max_corner.x, self.min_corner.z))
 
             # 7
             if pos.x < self.min_corner.x:
-                return Vec3(self.min_corner.x, self.max_corner.y, self.min_corner.z).distance(pos)
+                return Vec3(self.min_corner.x, self.max_corner.y,
+                            self.min_corner.z).distance(pos)
 
             # 8
             if pos.x < self.max_corner.x:
-                return Vec2(pos.y, pos.z).distance(Vec2(self.max_corner.y, self.min_corner.z))
+                return Vec2(pos.y, pos.z).distance(
+                    Vec2(self.max_corner.y, self.min_corner.z))
 
             # 9
-            return Vec3(self.max_corner.x, self.max_corner.y, self.min_corner.z).distance(pos)
+            return Vec3(self.max_corner.x, self.max_corner.y,
+                        self.min_corner.z).distance(pos)
 
         if pos.z < self.max_corner.z:
             if pos.y < self.min_corner.y:
                 # 10
                 if pos.x < self.min_corner.x:
-                    return Vec2(pos.x, pos.y).distance(Vec2(self.min_corner.x, self.min_corner.y))
+                    return Vec2(pos.x, pos.y).distance(
+                        Vec2(self.min_corner.x, self.min_corner.y))
 
                 # 11
                 if pos.x < self.max_corner.x:
                     return self.min_corner.y - pos.y
 
                 # 12
-                return Vec2(pos.x, pos.y).distance(Vec2(self.max_corner.x, self.min_corner.y))
+                return Vec2(pos.x, pos.y).distance(
+                    Vec2(self.max_corner.x, self.min_corner.y))
 
             if pos.y < self.max_corner.y:
                 # 13
@@ -577,52 +624,61 @@ class AAbox:
 
             # 16
             if pos.x < self.min_corner.x:
-                return Vec2(pos.x, pos.y).distance(Vec2(self.max_corner.x, self.min_corner.y))
+                return Vec2(pos.x, pos.y).distance(
+                    Vec2(self.max_corner.x, self.min_corner.y))
 
             # 17
             if pos.x < self.max_corner.x:
                 return pos.y - self.max_corner.y
 
             # 18
-            return Vec2(pos.x, pos.y).distance(Vec2(self.max_corner.x, self.max_corner.y))
+            return Vec2(pos.x, pos.y).distance(
+                Vec2(self.max_corner.x, self.max_corner.y))
 
         if pos.y < self.min_corner.y:
             # 19
             if pos.x < self.min_corner.x:
-                return Vec3(self.min_corner.x, self.min_corner.y, self.max_corner.z).distance(pos)
+                return Vec3(self.min_corner.x, self.min_corner.y,
+                            self.max_corner.z).distance(pos)
 
             # 20
             if pos.x < self.max_corner.x:
-                return Vec2(pos.y, pos.z).distance(Vec2(self.min_corner.y, self.max_corner.z))
+                return Vec2(pos.y, pos.z).distance(
+                    Vec2(self.min_corner.y, self.max_corner.z))
 
             # 21
-            return Vec3(self.max_corner.x, self.min_corner.y, self.max_corner.z).distance(pos)
+            return Vec3(self.max_corner.x, self.min_corner.y,
+                        self.max_corner.z).distance(pos)
 
         if pos.y < self.max_corner.y:
             # 22
             if pos.x < self.min_corner.x:
-                return Vec2(pos.x, pos.z).distance(Vec2(self.min_corner.x, self.max_corner.z))
+                return Vec2(pos.x, pos.z).distance(
+                    Vec2(self.min_corner.x, self.max_corner.z))
 
             # 23
             if pos.x < self.max_corner.x:
                 return pos.z - self.max_corner.z
 
             # 24
-            return Vec2(pos.x, pos.z).distance(Vec2(self.max_corner.x, self.max_corner.z))
+            return Vec2(pos.x, pos.z).distance(
+                Vec2(self.max_corner.x, self.max_corner.z))
 
         # 25
         if pos.x < self.min_corner.x:
-            return Vec3(self.min_corner.x, self.max_corner.y, self.max_corner.z).distance(pos)
+            return Vec3(self.min_corner.x, self.max_corner.y,
+                        self.max_corner.z).distance(pos)
 
         # 8
         if pos.x < self.max_corner.x:
-            return Vec2(pos.y, pos.z).distance(Vec2(self.max_corner.y, self.max_corner.z))
+            return Vec2(pos.y, pos.z).distance(
+                Vec2(self.max_corner.y, self.max_corner.z))
 
         # 27
         return self.max_corner.distance(pos)
 
     @staticmethod
-    def large_box(min_corner = None, max_corner = None):
+    def large_box(min_corner=None, max_corner=None):
         if min_corner:
             box_min_corner = min_corner - Vec3(1000)
         else:
@@ -634,7 +690,6 @@ class AAbox:
             box_max_corner = Vec3(1000)
 
         return AAbox(box_min_corner, box_max_corner)
-
 
     def intersect(self, other):
         if isinstance(other, Triangle):
@@ -797,7 +852,7 @@ class LeftKDTree:
         median = photon_len // 2
 
         left = box.photons[:median]
-        right = box.photons[median+1:]
+        right = box.photons[median + 1:]
 
         if longest_axis == 0:
             left_box = deepcopy(box.box)
@@ -852,7 +907,8 @@ class KDtree(CompositeObject):
         return False
 
     @staticmethod
-    def nearest_neighbour_helper(pos, dist, photon, kd, excluding=None, max_dist=None):
+    def nearest_neighbour_helper(pos, dist, photon, kd, excluding=None,
+                                 max_dist=None):
         if isinstance(kd, PhotonBox):
             if excluding:
                 hit = kd.nearest_neighbour_excluding(pos, excluding, max_dist)
@@ -871,20 +927,22 @@ class KDtree(CompositeObject):
             return False
 
         if kd.left.box.distance(pos) < dist:
-            hit = KDtree.nearest_neighbour_helper(pos,dist,photon,kd.left, excluding, max_dist)
+            hit = KDtree.nearest_neighbour_helper(pos, dist, photon, kd.left,
+                                                  excluding, max_dist)
             if hit and hit.t < dist:
                 dist = hit.t
                 photon = hit.obj
 
         if kd.right.box.distance(pos) < dist:
-            hit = KDtree.nearest_neighbour_helper(pos, dist, photon, kd.right, excluding, max_dist)
+            hit = KDtree.nearest_neighbour_helper(pos, dist, photon, kd.right,
+                                                  excluding, max_dist)
             if hit and hit.t < dist:
                 dist = hit.t
                 photon = hit.obj
 
         return Hit(photon, dist)
 
-    def nearest_neighbour(self, pos, excluding = None, max_dist = None):
+    def nearest_neighbour(self, pos, excluding=None, max_dist=None):
         box = self.get_box_at(pos)
         if not box:
             nearest_photon = None
@@ -899,7 +957,9 @@ class KDtree(CompositeObject):
             nearest_photon = hit.obj
             nearest_dist = hit.t
 
-        return KDtree.nearest_neighbour_helper(pos, nearest_dist,nearest_photon, self, excluding, max_dist)
+        return KDtree.nearest_neighbour_helper(pos, nearest_dist,
+                                               nearest_photon, self, excluding,
+                                               max_dist)
 
     def k_nearest_neighbours(self, pos, k):
         lst = []
@@ -913,7 +973,7 @@ class KDtree(CompositeObject):
 
         return lst
 
-    def k_nearest_neighbours_plane(self, pos, k, normal, max_dist = None):
+    def k_nearest_neighbours_plane(self, pos, k, normal, max_dist=None):
         lst = []
         found = set()
 
@@ -944,15 +1004,15 @@ class KDtree(CompositeObject):
             longest_axis = box.box.longest_axis()
 
             if longest_axis == 0:
-                box.photons.sort(key= lambda photon: photon.pos.x)
+                box.photons.sort(key=lambda photon: photon.pos.x)
             elif longest_axis == 1:
-                box.photons.sort(key= lambda photon: photon.pos.y)
+                box.photons.sort(key=lambda photon: photon.pos.y)
             elif longest_axis == 2:
-                box.photons.sort(key= lambda photon: photon.pos.z)
+                box.photons.sort(key=lambda photon: photon.pos.z)
 
             photon_len = len(box.photons)
 
-            median = photon_len//2
+            median = photon_len // 2
 
             left = box.photons[:median]
             right = box.photons[median:]
@@ -961,7 +1021,7 @@ class KDtree(CompositeObject):
                 left_box = deepcopy(box.box)
                 right_box = deepcopy(box.box)
 
-                middle_x = (left[-1].pos.x + right[0].pos.x)/2
+                middle_x = (left[-1].pos.x + right[0].pos.x) / 2
 
                 left_box.max_corner.x = middle_x
                 right_box.min_corner.x = middle_x
@@ -989,11 +1049,10 @@ class KDtree(CompositeObject):
 
             tree = KDtree(depth, box.box)
 
-            tree.left = KDtree.build(depth-1, leftBox)
+            tree.left = KDtree.build(depth - 1, leftBox)
             tree.right = KDtree.build(depth - 1, rightBox)
 
             return tree
-
 
         if depth <= 0 or len(objects) < 30:
             return AABB(box, objects)
@@ -1024,7 +1083,8 @@ class KDtree(CompositeObject):
                 if rightBox.intersect(obj):
                     rObj.append(obj)
 
-            cost = leftBox.surface_area() * len(lObj) + rightBox.surface_area() * len(rObj)
+            cost = leftBox.surface_area() * len(
+                lObj) + rightBox.surface_area() * len(rObj)
 
             if cost < best_cost:
                 best_cost = cost
@@ -1056,7 +1116,8 @@ class KDtree(CompositeObject):
                 if rightBox.intersect(obj):
                     rObj.append(obj)
 
-            cost = leftBox.surface_area() * len(lObj) + rightBox.surface_area() * len(rObj)
+            cost = leftBox.surface_area() * len(
+                lObj) + rightBox.surface_area() * len(rObj)
 
             if cost < best_cost:
                 best_cost = cost
@@ -1088,7 +1149,8 @@ class KDtree(CompositeObject):
                 if rightBox.intersect(obj):
                     rObj.append(obj)
 
-            cost = leftBox.surface_area() * len(lObj) + rightBox.surface_area() * len(rObj)
+            cost = leftBox.surface_area() * len(
+                lObj) + rightBox.surface_area() * len(rObj)
 
             if cost < best_cost:
                 best_cost = cost
@@ -1159,12 +1221,12 @@ class Photon:
             return self.pos.distance2(other.pos)
 
     def in_plane(self, pos, normal, margin=0.001):
-        ax = pos-self.pos
+        ax = pos - self.pos
         ax.normalize()
         return normal.dot(ax) < margin
 
     @staticmethod
-    def generate_random_on_object(obj, power, dist = 0):
+    def generate_random_on_object(obj, power, dist=0):
         if isinstance(obj, Triangle):
             obj_normal = obj.normal()
             pos = obj.random_point_on_surface() + obj_normal * EPSILON
@@ -1172,7 +1234,7 @@ class Photon:
             direction = Vec3.point_on_hemisphere(obj.normal())
             col = obj.material.Ke * power
 
-            return Photon(pos+direction*dist, col, direction)
+            return Photon(pos + direction * dist, col, direction)
 
     def forward(self, scene, depth):
         if depth > 0:
@@ -1191,10 +1253,11 @@ class Photon:
                 object_Kd = bounce_object.material.Kd.avg()
                 object_Ks = bounce_object.material.Ks.avg()
 
-                propability_reflection = max(bounce_ds_r, bounce_ds_g, bounce_ds_b)
+                propability_reflection = max(bounce_ds_r, bounce_ds_g,
+                                             bounce_ds_b)
 
-                propability_difuse = object_Kd/(object_Kd+object_Ks)*propability_reflection
-
+                propability_difuse = object_Kd / (
+                        object_Kd + object_Ks) * propability_reflection
 
                 propability_specular = propability_reflection - propability_difuse
 
@@ -1206,12 +1269,16 @@ class Photon:
 
                     self.col /= 0.5
                     self.col *= bounce_object.material.Kd
-                    self.col /= pi*2
+                    self.col /= pi * 2
 
-                    bounce_photon = Photon(deepcopy(bounce_pos), deepcopy(self.col), Vec3.point_on_hemisphere(bounce_object.normal()))
+                    bounce_photon = Photon(deepcopy(bounce_pos),
+                                           deepcopy(self.col),
+                                           Vec3.point_on_hemisphere(
+                                               bounce_object.normal()))
 
-                    #return bounce_photon.forward(scene, depth-1)
-                    return [deepcopy(bounce_photon)] + bounce_photon.forward(scene, depth - 1)
+                    # return bounce_photon.forward(scene, depth-1)
+                    return [deepcopy(bounce_photon)] + bounce_photon.forward(
+                        scene, depth - 1)
 
                 elif rnd < propability_difuse + propability_specular:
                     # TODO Add specular bounce
@@ -1219,15 +1286,17 @@ class Photon:
 
                 else:
 
-                    self.col /= (1-propability_reflection)
-                    self.col *= bounce_object.material.Kd/ (pi*2)
-                    return [Photon(bounce_pos, self.col, Vec3.point_on_hemisphere(bounce_object.normal()))]
+                    self.col /= (1 - propability_reflection)
+                    self.col *= bounce_object.material.Kd / (pi * 2)
+                    return [Photon(bounce_pos, self.col,
+                                   Vec3.point_on_hemisphere(
+                                       bounce_object.normal()))]
 
         return []
 
 
 class PhotonList:
-    def __init__(self, photons = None):
+    def __init__(self, photons=None):
         self.photons = []
         if photons:
             self.photons = photons
@@ -1238,7 +1307,7 @@ class PhotonList:
 
 
 class PhotonBox:
-    def __init__(self, photon_list, box = None):
+    def __init__(self, photon_list, box=None):
         if box:
             self.box = box
             self.photons = photon_list.photons
@@ -1254,7 +1323,7 @@ class PhotonBox:
             self.box = box
             self.photons = photon_list.photons
 
-    def nearest_neighbour(self, pos, max_dist = None):
+    def nearest_neighbour(self, pos, max_dist=None):
         best_obj = None
         best_dist2 = inf
 
@@ -1272,7 +1341,7 @@ class PhotonBox:
 
         return Hit(best_obj, dist)
 
-    def nearest_neighbour_excluding(self, pos, exclusions, max_dist = None):
+    def nearest_neighbour_excluding(self, pos, exclusions, max_dist=None):
         best_obj = None
         best_dist2 = inf
 
@@ -1286,7 +1355,7 @@ class PhotonBox:
 
         dist = sqrt(best_dist2)
         if max_dist:
-            if dist>max_dist:
+            if dist > max_dist:
                 return False
 
         return Hit(best_obj, dist)
@@ -1307,16 +1376,15 @@ class PhotonBox:
             dist2 = obj.distance2(pos)
 
             if len(best_obj) < k:
-                insort(best_obj, Hit(obj,sqrt(dist2)))
+                insort(best_obj, Hit(obj, sqrt(dist2)))
                 worst_pass_dist2 = max(worst_pass_dist2, dist2)
 
             elif dist2 < worst_pass_dist2:
                 best_obj = best_obj[:-1]
-                insort(best_obj,Hit(obj,dist2))
+                insort(best_obj, Hit(obj, dist2))
                 worst_pass_dist2 = best_obj[-1].t
 
         return best_obj
 
     def get_box_at(self, pos):
         return self
-

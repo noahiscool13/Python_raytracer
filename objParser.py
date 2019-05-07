@@ -1,4 +1,3 @@
-from MathUtil import *
 from SceneObjects import *
 
 
@@ -20,6 +19,9 @@ def parce_mtl(data, scene):
                 mtl = Material()
 
                 mtl_name = l[1]
+
+            elif l[0] == "map_Kd":
+                mtl.map_Kd = Texture(l[1])
 
             elif l[0] == "Ns":
                 mtl.Ns = float(l[1])
@@ -56,6 +58,8 @@ def parse_obj(data):
     pl = []
     ps = set()
 
+    tex_coordinates = []
+
     mtl = Material()
 
     for row in data:
@@ -67,7 +71,7 @@ def parse_obj(data):
 
             if r[0] == "mtllib":
                 with open(r[1], "r") as file:
-                    parce_mtl(file.read(),scene)
+                    parce_mtl(file.read(), scene)
                     mtl = scene.materials["default"]
 
             if r[0] == "usemtl":
@@ -89,16 +93,23 @@ def parse_obj(data):
                     scene.points.append(p)
 
             if r[0] == "vn":
-                vertex_normals.append(Vec3(float(r[1]), float(r[2]), float(r[3])))
+                vertex_normals.append(
+                    Vec3(float(r[1]), float(r[2]), float(r[3])))
+
+            if r[0] == "vt":
+                tex_coordinates.append(Vec2(float(r[1]), float(r[2])))
 
             if r[0] == "f":
 
                 face_points = []
+                tex_points = []
 
-                for p in range(1,len(r)):
+                for p in range(1, len(r)):
                     ps = r[p].split("/")
                     try:
                         face_points.append(scene.points[int(ps[0]) - 1])
+                        if len(ps) > 2:
+                            tex_points.append(tex_coordinates[int(ps[1]) - 1])
                     except:
                         pass
 
@@ -107,10 +118,14 @@ def parse_obj(data):
 
                     if len(ps) > 2:
                         pass
-                        #p1.normal = vertex_normals[int(ps[2])-1]
+                        # p1.normal = vertex_normals[int(ps[2])-1]
 
-                for p in range(len(face_points)-2):
-                    triangle = Triangle(face_points[0], face_points[p+1], face_points[p+2],material=mtl)
+                for p in range(len(face_points) - 2):
+                    tex = TexUV(tex_points[0], tex_points[p + 1],
+                                tex_points[p + 2])
+                    triangle = Triangle(face_points[0], face_points[p + 1],
+                                        face_points[p + 2], material=mtl,
+                                        tex_uv=tex)
 
                     if triangle.area() > 0:
                         scene.objects.append(
@@ -118,6 +133,7 @@ def parse_obj(data):
                         )
 
     scene.calc_vertex_normals()
+    scene.tex_coordinates = tex_coordinates
 
     return scene
 
@@ -134,21 +150,19 @@ def parse_senario(data, scene):
             if r[0] == "point_light":
                 if len(r) > 7:
                     scene.lights.append(
-                        Light(Vec3(float(r[1]), float(r[2]), float(r[3])), Vec3(float(r[4]), float(r[5]), float(r[6])), float(r[7])))
+                        Light(Vec3(float(r[1]), float(r[2]), float(r[3])),
+                              Vec3(float(r[4]), float(r[5]), float(r[6])),
+                              float(r[7])))
                 else:
                     scene.lights.append(
-                        Light(Vec3(float(r[1]), float(r[2]), float(r[3])), Vec3(float(r[4]), float(r[5]), float(r[6]))))
+                        Light(Vec3(float(r[1]), float(r[2]), float(r[3])),
+                              Vec3(float(r[4]), float(r[5]), float(r[6]))))
 
             if r[0] == "camera":
                 scene.camera = Camera(
-                    Point(Vec3(float(r[1]), float(r[2]), float(r[3])), Vec3(float(r[4]), float(r[5]), float(r[6]))))
+                    Point(Vec3(float(r[1]), float(r[2]), float(r[3])),
+                          Vec3(float(r[4]), float(r[5]), float(r[6]))))
             if r[0] == "render_size":
                 scene.rendersize = (int(r[1]), int(r[2]))
             if r[0] == "ss":
                 scene.ss = int(r[1])
-
-
-
-
-
-

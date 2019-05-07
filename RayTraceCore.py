@@ -10,19 +10,18 @@ try:
 except:
     print("NO MATPLOTLIB")
 
-from PIL import Image
-
 try:
     from tqdm import tqdm
 except:
     print("NO TQDM")
+
+
     def tqdm(lst):
         for x in lst:
             yield x
 
-from PostProcessing import blend, blur, bloom
+from PostProcessing import blend, bloom
 from Shaders import *
-from MathUtil import *
 from SceneObjects import *
 
 from math import *
@@ -30,7 +29,7 @@ from math import *
 try:
     from math import inf
 except:
-    inf = 10**99
+    inf = 10 ** 99
 
 from multiprocessing import Pool
 
@@ -51,18 +50,19 @@ def trace_with_photon_map(ray, scene):
     dist = inf
 
     for tree in scene.photon_map:
-        hit = tree.k_nearest_neighbours_plane(posHit,42,hit_object.normal(), max_dist=0.2)
+        hit = tree.k_nearest_neighbours_plane(posHit, 42, hit_object.normal(),
+                                              max_dist=0.2)
 
     col = Vec3(0.0)
 
     if hit:
         dist_to_photon = hit[-1].distance2(posHit)
         for p in hit:
-
-            #col += p.col / (dist_to_photon * pi) / 150
-            col += p.col / (dist_to_photon**2*pi)
+            # col += p.col / (dist_to_photon * pi) / 150
+            col += p.col / (dist_to_photon ** 2 * pi)
 
     return col
+
 
 def trace_with_photon_map_indirect(ray, scene):
     hit = ray.intersect(scene)
@@ -91,7 +91,8 @@ def trace_direct(ray, scene):
 
     if hit_object.material.smoothNormal:
         u, v = ray.intersect_uv(hit_object)
-        normal = hit_object.b.normal * u + hit_object.c.normal * v + hit_object.a.normal * (1 - u - v)
+        normal = hit_object.b.normal * u + hit_object.c.normal * v + hit_object.a.normal * (
+                1 - u - v)
         if (ray.origin - posHit).dot(normal) < 0:
             normal = -normal
     else:
@@ -111,24 +112,34 @@ def trace_direct(ray, scene):
         if check_if_visable(posHit, light.pos, hit_object, scene.objects):
             chance = light.color.length() / scene.total_light()
 
-            light_color = light.color / ((posHit-light.pos).length2() * 4 * pi) / chance
+            light_color = light.color / (
+                    (posHit - light.pos).length2() * 4 * pi) / chance
 
-            direct_light += diffuse(normal, posHit, light.pos, hit_object.material) * light_color
-            direct_light += specular(normal, posHit, light.pos, ray.origin, hit_object.material) * light_color
+            direct_light += diffuse(normal, posHit, light.pos,
+                                    hit_object.material) * light_color
+            direct_light += specular(normal, posHit, light.pos, ray.origin,
+                                     hit_object.material) * light_color
 
     elif isinstance(light, Triangle):
         random_surface_point = light.random_point_on_surface()
 
-        if check_if_visable(posHit, random_surface_point, hit_object, scene.objects):
+        if check_if_visable(posHit, random_surface_point, hit_object,
+                            scene.objects):
             chance = light.material.Ke.length() * light.area() / scene.total_light()
 
             triangle_color = light.area() / (
-                        (posHit - random_surface_point).length2() * 2 * pi) * light.material.Ke/chance * diffuse(light.normal(), random_surface_point, posHit)
+                    (
+                            posHit - random_surface_point).length2() * 2 * pi) * light.material.Ke / chance * diffuse(
+                light.normal(), random_surface_point, posHit)
 
-            direct_light += diffuse(normal, posHit, random_surface_point, hit_object.material) * triangle_color
-            direct_light += specular(normal, posHit, random_surface_point, ray.origin, hit_object.material) * triangle_color
+            direct_light += diffuse(normal, posHit, random_surface_point,
+                                    hit_object.material) * triangle_color
+            direct_light += specular(normal, posHit, random_surface_point,
+                                     ray.origin,
+                                     hit_object.material) * triangle_color
 
     return direct_light
+
 
 def trace(ray, scene, depth):
     if hasattr(scene, "photon_map"):
@@ -141,11 +152,14 @@ def trace(ray, scene, depth):
 
     hit_object, hit_t = hit.obj, hit.t
 
-    posHit = ray.after(hit_t-EPSILON)
+    posHit = ray.after(hit_t - EPSILON)
+
+    if hit_object.material.smoothNormal or hit_object.material.map_Kd:
+        u, v = ray.intersect_uv(hit_object)
 
     if hit_object.material.smoothNormal:
-        u, v = ray.intersect_uv(hit_object)
-        normal = hit_object.b.normal * u + hit_object.c.normal * v + hit_object.a.normal * (1 - u - v)
+        normal = hit_object.b.normal * u + hit_object.c.normal * v + hit_object.a.normal * (
+                1 - u - v)
         if (ray.origin - posHit).dot(normal) < 0:
             normal = -normal
     else:
@@ -160,8 +174,20 @@ def trace(ray, scene, depth):
         light.random_translate()
 
         if check_if_visable(posHit, light.pos, hit_object, scene.objects):
-            direct_light += diffuse(normal, posHit, light.pos, hit_object.material) * light.color
-            direct_light += specular(normal, posHit, light.pos, ray.origin, hit_object.material) * light.color
+            if hit_object.material.map_Kd:
+                tex_uv = hit_object.tex_uv
+                tex_pos = tex_uv.base+tex_uv.u*u+tex_uv.v*v
+                direct_light += diffuse(normal, posHit, light.pos,
+                                        hit_object.material,
+                                        tex_pos) * light.color
+                direct_light += specular(normal, posHit, light.pos, ray.origin,
+                                         hit_object.material,
+                                         tex_pos) * light.color
+            else:
+                direct_light += diffuse(normal, posHit, light.pos,
+                                        hit_object.material) * light.color
+                direct_light += specular(normal, posHit, light.pos, ray.origin,
+                                         hit_object.material) * light.color
 
     indirect_light = Vec3(0.0)
 
@@ -173,17 +199,17 @@ def trace(ray, scene, depth):
         bounce_hit = bounce_ray.intersect(scene)
 
         if bounce_hit:
+            bounce_hit_pos = bounce_ray.after(bounce_hit.t - EPSILON)
 
-            bounce_hit_pos = bounce_ray.after(bounce_hit.t-EPSILON)
+            bounce_light = trace(bounce_ray, scene, depth - 1)
 
-            bounce_light = trace(bounce_ray,scene, depth - 1)
-
-            indirect_light += diffuse(normal, posHit, bounce_hit_pos, hit_object.material) * bounce_light
-            #indirect_light += direct(hit_object.material) * bounce_light
+            indirect_light += diffuse(normal, posHit, bounce_hit_pos,
+                                      hit_object.material) * bounce_light
+            # indirect_light += direct(hit_object.material) * bounce_light
 
     # print(indirect_light)
 
-    return direct_light/pi + indirect_light*2
+    return direct_light / pi + indirect_light * 2
 
 
 def render_row(settings):
@@ -196,10 +222,12 @@ def render_row(settings):
             x_offset = random()
             y_offset = random()
 
-            xx = (2 * ((x + x_offset + 0.5) * settings.invWidth) - 1) * settings.angle * settings.aspectratio
-            yy = (1 - 2 * ((y + y_offset + 0.5) * settings.invHeight)) * settings.angle
+            xx = (2 * ((
+                               x + x_offset + 0.5) * settings.invWidth) - 1) * settings.angle * settings.aspectratio
+            yy = (1 - 2 * ((
+                                   y + y_offset + 0.5) * settings.invHeight)) * settings.angle
 
-            raydir = Vec3(xx, yy, -1).rotated(Vec3(0,1,-0.2))
+            raydir = Vec3(xx, yy, -1).rotated(Vec3(0, 1, -0.35))
             raydir.normalize()
             ray = Ray(settings.scene.camera.point.pos, raydir)
 
@@ -214,13 +242,15 @@ def render_row(settings):
     return t
 
 
-def render(scene, doClip = False, mode="recursive"):
+def render(scene, doClip=False, mode="recursive"):
     row_list = []
 
     width, height = scene.rendersize
 
     for y in range(0, height):
-        row_list.append(RowSettings(scene, width=width, height=height, row=y, ss=scene.ss, mode=mode))
+        row_list.append(
+            RowSettings(scene, width=width, height=height, row=y, ss=scene.ss,
+                        mode=mode))
     with Pool(7) as p:
         img = list(tqdm(p.imap(render_row, row_list), total=height))
 
@@ -239,7 +269,7 @@ def render(scene, doClip = False, mode="recursive"):
     return a
 
 
-def progressive_render(scene, batch=1, file = None):
+def progressive_render(scene, batch=1, file=None):
     ss = scene.ss
 
     scene.ss = batch
@@ -249,8 +279,8 @@ def progressive_render(scene, batch=1, file = None):
     if file:
         save_img(img, file)
 
-    for cycle in tqdm(range((ss-1)//batch)):
-        img = blend([img,render(scene, doClip=False)],[1,1/(cycle+1)])
+    for cycle in tqdm(range((ss - 1) // batch)):
+        img = blend([img, render(scene, doClip=False)], [1, 1 / (cycle + 1)])
         if file:
             save_img(img, file)
 
@@ -268,9 +298,10 @@ def show_img(img):
     plt.imshow(img)
     plt.show()
 
+
 def save_img(img, file):
     image = Image.fromarray((np.array(clip(img)) * 255).astype('uint8'), "RGB")
     image.save("no_bloom.png", "PNG")
     bloom_img = bloom(img)
-    image = Image.fromarray((np.array(bloom_img)*255).astype('uint8'),"RGB")
-    image.save(file,"PNG")
+    image = Image.fromarray((np.array(bloom_img) * 255).astype('uint8'), "RGB")
+    image.save(file, "PNG")

@@ -1,24 +1,30 @@
-from math import *
-
-from MathUtil import *
 from SceneObjects import *
+
 
 def ambiant(material, scene):
     return material.Ka * scene.ambiant_light
 
+
 def emittance(material):
     return material.Ke
+
 
 def direct(material):
     return material.Kd
 
 
-def diffuse(normal, posHit, lightPos, material = Material(Kd=Vec3(1))):
+def diffuse(normal, posHit, lightPos, material=Material(Kd=Vec3(1)), uv=Vec2(0, 0)):
     lightDirection = (lightPos - posHit).unit()
-    return max(lightDirection.dot(normal), 0) * material.Kd
+    #print(material.map_Kd)
+    if material.map_Kd:
+        maped_kd = material.map_Kd.get_value(*uv.toList())
+        #print(maped_kd)
+        return max(lightDirection.dot(normal), 0) * material.Kd * maped_kd
+    else:
+        return max(lightDirection.dot(normal), 0) * material.Kd
 
 
-def specular(normal, posHit, lightPos, cameraPos, material):
+def specular(normal, posHit, lightPos, cameraPos, material, uv=(0,0)):
     lightDirection = (lightPos - posHit).unit()
     reflec = (2 * (normal.dot(lightDirection)) * normal - lightDirection)
     spec = max((cameraPos - posHit).unit().dot(reflec), 0)
