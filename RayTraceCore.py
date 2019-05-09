@@ -141,6 +141,104 @@ def trace_direct(ray, scene):
     return direct_light
 
 
+def trace_initial(ray, scene, depth, light_samples):
+    hit = ray.intersect(scene)
+
+    if not hit:
+        return Vec3(0.0)
+
+    hit_object, hit_t = hit.obj, hit.t
+
+    posHit = ray.after(hit_t - EPSILON)
+
+    if hit_object.tex_uv or hit_object.material.smoothNormal:
+        u, v = ray.intersect_uv(hit_object)
+
+    if hit_object.tex_uv:
+        tex_uv = hit_object.tex_uv
+        tex_pos = tex_uv.base + tex_uv.u * u + tex_uv.v * v
+
+    if hit_object.material.smoothNormal:
+        normal = hit_object.b.normal * u + hit_object.c.normal * v + hit_object.a.normal * (
+                1 - u - v)
+        if (ray.origin - posHit).dot(normal) < 0:
+            normal = -normal
+    else:
+        normal = hit_object.normal()
+
+    if hit_object.material.Ke:
+        if hit_object.material.map_Ke:
+            obj_emitted = hit_object.material.map_Ke.get_value(tex_pos)
+            obj_emitted *= obj_emitted * hit_object.material.Ke
+        else:
+            obj_emitted = hit_object.material.Ke
+    else:
+        obj_emitted = Vec3(0)
+
+    total_light = obj_emitted
+    total_light += ambiant(hit_object.material, scene)
+
+    if light_samples == "max":
+        light_set = scene.all_emittors()
+    else:
+        light_set = [scene.random_light() for _ in range(light_samples)]
+    direct_light = Vec3(0)
+    for light in light_set:
+
+        if isinstance(light, Light):
+            light.random_translate()
+
+            if check_if_visable(posHit, light.pos, hit_object, scene.objects):
+
+                if hit_object.material.map_Kd:
+                    direct_light += diffuse(normal, posHit, light.pos,
+                                            hit_object.material) * light.color * \
+                                    hit_object.material.map_Kd.get_value(
+                                        tex_pos)
+                    direct_light += specular(normal, posHit, light.pos,
+                                             ray.origin,
+                                             hit_object.material) * light.color
+                else:
+                    direct_light += diffuse(normal, posHit, light.pos,
+                                            hit_object.material) * light.color
+                    direct_light += specular(normal, posHit, light.pos,
+                                             ray.origin,
+                                             hit_object.material) * light.color
+
+        elif isinstance(light, Triangle):
+            light_uv = Vec2.random_uv()
+            random_surface_point = light.point_from_uv(light_uv)
+
+            if check_if_visable(posHit, random_surface_point, hit_object,
+                                scene.objects):
+
+                if light.material.map_Ke:
+                    light_mapped = light.material.map_Kd.get_value(
+                                        light_uv)
+                else:
+                    light_mapped = Vec3(1)
+
+                triangle_color = light.area() * light.material.Ke * diffuse(
+                    light.normal(), random_surface_point, posHit) / (4*pi*(random_surface_point-posHit).length2())
+
+                if hit_object.material.map_Kd:
+                   direct_light += diffuse(normal, posHit, random_surface_point,
+                                            hit_object.material) * triangle_color * light_mapped * \
+                                    hit_object.material.map_Kd.get_value(
+                                        tex_pos)
+                else:
+                    direct_light += diffuse(normal, posHit,
+                                            random_surface_point,
+                                            hit_object.material) * triangle_color * light_mapped
+                direct_light += specular(normal, posHit, random_surface_point,
+                                         ray.origin,
+                                         hit_object.material) * triangle_color * light_mapped
+
+    direct_light *= len(scene.all_emittors())/len(light_samples)
+
+    return total_light+direct_light
+
+
 def trace(ray, scene, depth):
     if hasattr(scene, "photon_map"):
         return trace_with_photon_map_indirect(ray, scene)
@@ -154,8 +252,12 @@ def trace(ray, scene, depth):
 
     posHit = ray.after(hit_t - EPSILON)
 
-    if hit_object.material.smoothNormal or hit_object.material.map_Kd:
+    if hit_object.material.smoothNormal or hit_object.material.map_Kd or hit_object.material.map_Ke:
         u, v = ray.intersect_uv(hit_object)
+
+    if hit_object.material.map_Kd or hit_object.material.map_Ke:
+        tex_uv = hit_object.tex_uv
+        tex_pos = tex_uv.base + tex_uv.u * u + tex_uv.v * v
 
     if hit_object.material.smoothNormal:
         normal = hit_object.b.normal * u + hit_object.c.normal * v + hit_object.a.normal * (
@@ -167,16 +269,23 @@ def trace(ray, scene, depth):
 
     direct_light = Vec3(0.0)
 
-    direct_light += emittance(hit_object.material)
+    if hit_object.material.map_Ke:
+        maped_ke = hit_object.material.map_Ke.get_value(tex_pos)
+        direct_light += emittance(hit_object.material) * maped_ke
+    else:
+        direct_light += emittance(hit_object.material)
+
     direct_light += ambiant(hit_object.material, scene)
 
-    for light in scene.lights:
+    light = scene.random_weighted_light()
+
+    if isinstance(light, Light):
+        # for light in scene.lights:
         light.random_translate()
 
         if check_if_visable(posHit, light.pos, hit_object, scene.objects):
             if hit_object.material.map_Kd:
-                tex_uv = hit_object.tex_uv
-                tex_pos = tex_uv.base+tex_uv.u*u+tex_uv.v*v
+
                 direct_light += diffuse(normal, posHit, light.pos,
                                         hit_object.material,
                                         tex_pos) * light.color
@@ -189,25 +298,30 @@ def trace(ray, scene, depth):
                 direct_light += specular(normal, posHit, light.pos, ray.origin,
                                          hit_object.material) * light.color
 
+    elif isinstance(light, Triangle):
+        random_surface_point = light.random_point_on_surface()
+
+        if check_if_visable(posHit, random_surface_point, hit_object,
+                            scene.objects):
+            chance = light.material.Ke.length() * light.area() / scene.total_light()
+
+            triangle_color = light.area() / (
+                    (
+                            posHit - random_surface_point).length2() * 2 * pi) * light.material.Ke / chance * diffuse(
+                light.normal(), random_surface_point, posHit)
+
+            direct_light += diffuse(normal, posHit, random_surface_point,
+                                    hit_object.material) * triangle_color
+            direct_light += specular(normal, posHit, random_surface_point,
+                                     ray.origin,
+                                     hit_object.material) * triangle_color
+
     indirect_light = Vec3(0.0)
 
     if depth > 0:
         bounce_direction = Vec3.point_on_diffuse_hemisphere(normal)
 
-        bounce_ray = Ray(posHit, bounce_direction)
-
-        bounce_hit = bounce_ray.intersect(scene)
-
-        if bounce_hit:
-            bounce_hit_pos = bounce_ray.after(bounce_hit.t - EPSILON)
-
-            bounce_light = trace(bounce_ray, scene, depth - 1)
-
-            indirect_light += diffuse(normal, posHit, bounce_hit_pos,
-                                      hit_object.material) * bounce_light
-            # indirect_light += direct(hit_object.material) * bounce_light
-
-    # print(indirect_light)
+        indirect_light = trace(Ray(posHit, bounce_direction), scene, depth - 1)
 
     return direct_light / pi + indirect_light * 2
 
@@ -232,7 +346,7 @@ def render_row(settings):
             ray = Ray(settings.scene.camera.point.pos, raydir)
 
             if settings.mode == "recursive":
-                col += trace(ray, settings.scene, 2)
+                col += trace_initial(ray, settings.scene, 5, "max")
             elif settings.mode == "direct":
                 col += trace_direct(ray, settings.scene)
 

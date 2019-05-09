@@ -3,9 +3,9 @@ from objParser import *
 from RayTraceCore import *
 
 if __name__ == '__main__':
-    with open("house_test.obj", "r") as file:
+    with open("glowstone.obj", "r") as file:
         scene = parse_obj(file.read())
-    with open("tree_obj.senario") as file:
+    with open("north.scenario") as file:
         parse_senario(file.read(), scene)
 
     # with open("teapot.obj", "r") as file:

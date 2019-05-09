@@ -23,6 +23,9 @@ def parce_mtl(data, scene):
             elif l[0] == "map_Kd":
                 mtl.map_Kd = Texture(l[1])
 
+            elif l[0] == "map_Ke":
+                mtl.map_Ke = Texture(l[1])
+
             elif l[0] == "Ns":
                 mtl.Ns = float(l[1])
 

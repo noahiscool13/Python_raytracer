@@ -102,3 +102,4 @@ def bloom(img, threshold=1, amount=0.2, kernel_size=9):
     final = clip(add_images([img, blurred], [1, amount]))
 
     return final
+

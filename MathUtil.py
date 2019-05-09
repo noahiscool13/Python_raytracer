@@ -131,6 +131,17 @@ class Vec2:
         """
         return self.x * other.x + self.y * other.y
 
+    @staticmethod
+    def random_uv():
+        a = 1
+        b = 1
+
+        while a + b > 1:
+            a = random()
+            b = random()
+
+        return Vec2(a, b)
+
     def __sub__(self, other):
         return Vec2(self.x - other.x, self.y - other.y)
 
@@ -161,6 +172,9 @@ class Vec2:
         if abs(self.y - other.y) > EPSILON:
             return False
         return True
+
+    def __bool__(self):
+        return bool(self.length2())
 
     def distance(self, other):
         return (self - other).length()
@@ -266,6 +280,19 @@ class Vec3:
         elif isinstance(other, Vec3):
             return Vec3(self.x * other.x, self.y * other.y, self.z * other.z)
 
+    @staticmethod
+    def random_uv():
+        a = 1
+        b = 1
+        c = 1
+
+        while a + b + c > 1:
+            a = random()
+            b = random()
+            c = random()
+
+        return Vec3(a,b,c)
+
     def dot(self, other):
         """
         Return dot product of self and other.
@@ -295,6 +322,9 @@ class Vec3:
         self.y += other.y
         self.z += other.z
         return self
+
+    def __bool__(self):
+        return bool(self.length2())
 
     def __neg__(self):
         return Vec3(-self.x, -self.y, -self.z)

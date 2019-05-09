@@ -15,13 +15,7 @@ def direct(material):
 
 def diffuse(normal, posHit, lightPos, material=Material(Kd=Vec3(1)), uv=Vec2(0, 0)):
     lightDirection = (lightPos - posHit).unit()
-    #print(material.map_Kd)
-    if material.map_Kd:
-        maped_kd = material.map_Kd.get_value(*uv.toList())
-        #print(maped_kd)
-        return max(lightDirection.dot(normal), 0) * material.Kd * maped_kd
-    else:
-        return max(lightDirection.dot(normal), 0) * material.Kd
+    return max(lightDirection.dot(normal), 0) * material.Kd
 
 
 def specular(normal, posHit, lightPos, cameraPos, material, uv=(0,0)):
@@ -45,3 +39,6 @@ def check_if_visable(pos, light, triangle, objects):
                 if dist.t < max_dist:
                     return False
     return True
+
+def texture_map_kd(material,uv):
+    return material.map_Kd.get_value(uv)

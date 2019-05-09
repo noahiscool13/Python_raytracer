@@ -1,6 +1,6 @@
 from bisect import insort
 from math import *
-from random import uniform, choices
+from random import uniform, choices, choice
 
 from PIL import Image
 
@@ -43,9 +43,9 @@ class Texture:
         self.image = Image.open(image).transpose(Image.FLIP_TOP_BOTTOM)
         self.width, self.height = self.image.size
 
-    def get_value(self, u, v):
+    def get_value(self, uv):
         # print(int(u * self.width), int(v * self.height))
-        rgba = self.image.getpixel((int(u * self.width), int(v * self.height)))
+        rgba = self.image.getpixel((int(uv.x * self.width), int(uv.y * self.height)))
         rgb = list(rgba)[:3]
         return Vec3(*rgb)/255
 
@@ -69,8 +69,8 @@ class TextureCoordinate:
 
 
 class Material:
-    def __init__(self, Ka=Vec3(0.2), Kd=Vec3(0), Ks=Vec3(0), Ke=Vec3(), Ni=1,
-                 d=1, Ns=2, smoothNormal=False, map_kd=None):
+    def __init__(self, Ka=Vec3(0.0), Kd=Vec3(0), Ks=Vec3(0), Ke=Vec3(0), Ni=1,
+                 d=1, Ns=2, smoothNormal=False, map_kd=None, map_ke=None):
         self.Ka = Ka
         self.Kd = Kd
         self.Ks = Ks
@@ -79,6 +79,7 @@ class Material:
         self.d = d
         self.Ns = Ns
         self.map_Kd = map_kd
+        self.map_Ke = map_ke
         self.smoothNormal = smoothNormal
 
 
@@ -342,6 +343,12 @@ class Triangle():
 
         return self.a.pos + edge1 * a + edge2 * b
 
+    def point_from_uv(self,uv):
+        edge1 = self.b.pos - self.a.pos
+        edge2 = self.c.pos - self.a.pos
+
+        return self.a.pos + edge1 * uv.x + edge2 * uv.y
+
 
 class Light:
     def __init__(self, pos, color, softness=0.1):
@@ -409,10 +416,10 @@ class Scene:
             for obj in self.objects:
                 if isinstance(obj, CompositeObject):
                     for objc in obj.objects:
-                        if objc.material.Ke.length2() > 0:
+                        if objc.material.Ke:
                             emittors.append(objc)
                 else:
-                    if obj.material.Ke.length2() > 0:
+                    if obj.material.Ke:
                         emittors.append(obj)
 
             self.emitters = emittors
@@ -440,6 +447,10 @@ class Scene:
             self.total_light_val = total
 
             return total
+
+    def random_light(self):
+        self.total_light()
+        return choice(self.all_emittors())
 
     def random_weighted_light(self):
         self.total_light()
