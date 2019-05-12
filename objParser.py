@@ -124,11 +124,15 @@ def parse_obj(data):
                         # p1.normal = vertex_normals[int(ps[2])-1]
 
                 for p in range(len(face_points) - 2):
-                    tex = TexUV(tex_points[0], tex_points[p + 1],
-                                tex_points[p + 2])
-                    triangle = Triangle(face_points[0], face_points[p + 1],
-                                        face_points[p + 2], material=mtl,
-                                        tex_uv=tex)
+                    if tex_points:
+                        tex = TexUV(tex_points[0], tex_points[p + 1],
+                                    tex_points[p + 2])
+                        triangle = Triangle(face_points[0], face_points[p + 1],
+                                            face_points[p + 2], material=mtl,
+                                            tex_uv=tex)
+                    else:
+                        triangle = Triangle(face_points[0], face_points[p + 1],
+                                            face_points[p + 2], material=mtl)
 
                     if triangle.area() > 0:
                         scene.objects.append(

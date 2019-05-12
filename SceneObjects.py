@@ -427,6 +427,9 @@ class Scene:
 
             return emittors
 
+    def all_emmittors_chanced(self):
+        return [[x,1] for x in self.all_emittors()]
+
     def total_light(self):
         if self.total_light_set:
             return self.total_light_val
@@ -452,14 +455,38 @@ class Scene:
         self.total_light()
         return choice(self.all_emittors())
 
-    def random_weighted_light(self):
+    @staticmethod
+    def rate_light(pos,light):
+        if isinstance(light, Light):
+            return light.color.length()
+
+        elif isinstance(light, Triangle):
+            light_pos =  light.random_point_on_surface()
+            lightDirection = -(light_pos - pos).unit()
+            return (light.area() * light.material.Ke *
+            max(lightDirection.dot(light.normal()), 0)\
+            / (2*pi*(light_pos-pos).length2())).length()
+            # return max(0,lightDirection.dot(light.normal()))
+
+
+
+    def random_weighted_lights(self, pos,ammount=1,trashhold=0):
         self.total_light()
+        weights = [self.rate_light(pos,light) for light in self.all_emittors()]
+        tot = sum(weights)
+        weights = [x/tot*ammount for x in weights]
+        lights = choices(population=[[self.all_emittors()[x],weights[x]] for x in range(len(weights))], weights=weights,
+                    k=ammount)
 
         # TODO change to cum_weights, that should be faster
-        return \
-            choices(population=self.all_emittors(), weights=self.light_powers,
-                    k=1)[
-                0]
+        return [x for x in lights if x[1]>trashhold]
+
+
+    def all_positive_lights(self, pos,trashhold=0):
+        self.total_light()
+        weights = [self.rate_light(pos,light) for light in self.all_emittors()]
+        lights = zip(self.all_emittors(),weights)
+        return [[x[0],1] for x in lights if x[1]>trashhold]
 
 
 class RowSettings:

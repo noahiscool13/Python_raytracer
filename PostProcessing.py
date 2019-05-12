@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from MathUtil import clip
+from MathUtil import clip, sigmoid, basic_tonemap
 
 
 def add_images(images, weights=None):
@@ -103,3 +103,30 @@ def bloom(img, threshold=1, amount=0.2, kernel_size=9):
 
     return final
 
+
+def sigmoid_scale(img):
+    new_img = []
+
+    for y in range(len(img)):
+        row = []
+
+        for x in range(len(img[0])):
+            row.append([(sigmoid(n)-0.5)*2 for n in img[y][x]])
+
+        new_img.append(row)
+
+    return new_img
+
+
+def basic_tone_map_scale(img):
+    new_img = []
+
+    for y in range(len(img)):
+        row = []
+
+        for x in range(len(img[0])):
+            row.append([(basic_tonemap(n)-0.5)*2 for n in img[y][x]])
+
+        new_img.append(row)
+
+    return new_img

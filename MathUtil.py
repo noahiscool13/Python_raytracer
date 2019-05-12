@@ -1,5 +1,5 @@
 import numbers
-from math import sqrt, pi, acos, sin, cos
+from math import sqrt, pi, acos, sin, cos, e
 from random import random
 
 EPSILON = 0.00001
@@ -435,3 +435,14 @@ class Vec3:
 
     def avg(self):
         return (self.x + self.y + self.z) / 3
+
+
+def sigmoid(x):
+    return 1/(1+(e**(-x)))
+
+
+def sigmoid(x):
+    return 1/(1+(e**(-x)))
+
+def basic_tonemap(x):
+    return x/(x+1)
