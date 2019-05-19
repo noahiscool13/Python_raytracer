@@ -158,6 +158,17 @@ def trace_initial(ray, scene, depth, light_samples, first=False):
         tex_uv = hit_object.tex_uv
         tex_pos = tex_uv.base + tex_uv.u * u + tex_uv.v * v
 
+    if hit_object.material.d:
+        if hit_object.material.map_d:
+            obj_d = hit_object.material.map_d.get_value(tex_pos)
+            obj_d *= obj_d * hit_object.material.d
+        else:
+            obj_d = hit_object.material.d
+        if random() >obj_d:
+            posHit = ray.after(hit_t + EPSILON)
+            new_ray = Ray(posHit,ray.direction)
+            return trace_initial(new_ray,scene,depth,light_samples,first)
+
     if hit_object.material.smoothNormal:
         normal = hit_object.b.normal * u + hit_object.c.normal * v + hit_object.a.normal * (
                 1 - u - v)
@@ -181,7 +192,7 @@ def trace_initial(ray, scene, depth, light_samples, first=False):
     if light_samples == "max":
         light_set = scene.all_emmittors_chanced()
     elif light_samples == "positive":
-        light_set = scene.all_positive_lights(posHit,0.0001)
+        light_set = scene.all_positive_lights(posHit)
     else:
         light_set = scene.random_weighted_lights(posHit,light_samples)
     direct_light = Vec3(0)
@@ -194,7 +205,7 @@ def trace_initial(ray, scene, depth, light_samples, first=False):
             light.random_translate()
 
 
-            if check_if_visable(posHit, light.pos, hit_object, scene.objects):
+            if check_if_visable(posHit, light.pos, hit_object, scene):
 
                 if hit_object.material.map_Kd:
                     this_light += diffuse(normal, posHit, light.pos,
@@ -212,11 +223,14 @@ def trace_initial(ray, scene, depth, light_samples, first=False):
                                              hit_object.material) * light.color
 
         elif isinstance(light, Triangle):
+            if light == hit_object:
+                continue
+
             light_uv = Vec2.random_uv()
             random_surface_point = light.point_from_uv(light_uv)
 
             if check_if_visable(posHit, random_surface_point, hit_object,
-                                scene.objects):
+                                scene):
 
                 if light.material.map_Ke:
                     light_mapped = light.material.map_Kd.get_value(
@@ -249,7 +263,7 @@ def trace_initial(ray, scene, depth, light_samples, first=False):
     if depth:
         bounce_direction = Vec3.point_on_diffuse_hemisphere(normal)
 
-        indirect_light = trace_initial(Ray(posHit, bounce_direction), scene, depth - 1, light_samples) * max(bounce_direction.dot(normal), 0) * hit_object.material.Kd
+        indirect_light = trace_initial(Ray(posHit, bounce_direction), scene, depth - 1, light_samples,first=False) * max(bounce_direction.dot(normal), 0) * hit_object.material.Kd
 
         if hit_object.material.map_Kd:
             indirect_light*= hit_object.material.map_Kd.get_value(
@@ -360,8 +374,8 @@ def render_row(settings):
             yy = (1 - 2 * ((
                                    y + y_offset + 0.5) * settings.invHeight)) * settings.angle
 
-            #raydir = Vec3(xx, yy, -1).rotated(Vec3(0, 1, -0.35))
-            raydir = Vec3(xx, yy, -1).rotated(Vec3(0, 1, 0))
+            raydir = Vec3(xx, yy, -1).rotated(Vec3(0, 1, -0.35))
+            # raydir = Vec3(xx, yy, -1).rotated(Vec3(0, 1, 0))
 
             raydir.normalize()
             ray = Ray(settings.scene.camera.point.pos, raydir)

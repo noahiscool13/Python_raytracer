@@ -25,20 +25,24 @@ def specular(normal, posHit, lightPos, cameraPos, material, uv=(0,0)):
     return spec ** material.Ns * material.Ks
 
 
-def check_if_visable(pos, light, triangle, objects):
+def check_if_visable(pos, light, triangle, scene):
     direction = (pos - light)
-    max_dist = direction.length()
+    #max_dist = direction.length()
     direction.normalize()
 
     ray = Ray(light, direction)
+    hit = ray.intersect(scene)
 
-    for obj in objects:
-        dist = ray.intersect(obj)
-        if dist:
-            if dist.obj != triangle:
-                if dist.t < max_dist:
-                    return False
-    return True
+    if hit:
+        return hit.obj == triangle
+    return False
+    # for obj in objects:
+    #     dist = ray.intersect(obj)
+    #     if dist:
+    #         if dist.obj != triangle:
+    #             if dist.t < max_dist:
+    #                 return False
+    # return True
 
 def texture_map_kd(material,uv):
     return material.map_Kd.get_value(uv)

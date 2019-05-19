@@ -46,8 +46,13 @@ class Texture:
     def get_value(self, uv):
         # print(int(u * self.width), int(v * self.height))
         rgba = self.image.getpixel((int(uv.x * self.width), int(uv.y * self.height)))
-        rgb = list(rgba)[:3]
-        return Vec3(*rgb)/255
+
+        if len(rgba)>=3:
+            rgb = list(rgba)[:3]
+
+            return Vec3(*rgb)/255
+        else:
+            return rgba[0]/255
 
 
 class TexUV:
@@ -70,7 +75,7 @@ class TextureCoordinate:
 
 class Material:
     def __init__(self, Ka=Vec3(0.0), Kd=Vec3(0), Ks=Vec3(0), Ke=Vec3(0), Ni=1,
-                 d=1, Ns=2, smoothNormal=False, map_kd=None, map_ke=None):
+                 d=1, Ns=2, smoothNormal=False, map_kd=None, map_ke=None, map_d=None):
         self.Ka = Ka
         self.Kd = Kd
         self.Ks = Ks
@@ -80,6 +85,7 @@ class Material:
         self.Ns = Ns
         self.map_Kd = map_kd
         self.map_Ke = map_ke
+        self.map_d = map_d
         self.smoothNormal = smoothNormal
 
 
@@ -120,8 +126,32 @@ class Ray:
 
             if not firstTri:
                 return False
+            if self.direction.dot(firstTri.normal())>0:
+                new_ray = Ray(self.after(tnear + EPSILON), self.direction)
+                new_hit = new_ray.intersect(other)
+                if new_hit:
+                    new_hit.t += tnear + EPSILON
+                return new_hit
 
-            return Hit(firstTri, tnear)
+            if firstTri.material.d:
+                if firstTri.material.map_d:
+                    u, v = self.intersect_uv(firstTri)
+                    tex_uv = firstTri.tex_uv
+                    tex_pos = tex_uv.base + tex_uv.u * u + tex_uv.v * v
+                    obj_d = firstTri.material.map_d.get_value(tex_pos)
+                    obj_d *= obj_d * firstTri.material.d
+                else:
+                    obj_d = firstTri.material.d
+                if random()>obj_d:
+                    new_ray = Ray(self.after(tnear+EPSILON),self.direction)
+                    new_hit = new_ray.intersect(other)
+                    if new_hit:
+                        new_hit.t+=tnear+EPSILON
+                    return new_hit
+                else:
+                    return Hit(firstTri, tnear)
+            else:
+                return Hit(firstTri, tnear)
 
         if isinstance(other, Triangle):
 
