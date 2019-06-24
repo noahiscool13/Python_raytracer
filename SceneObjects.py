@@ -133,25 +133,25 @@ class Ray:
                     new_hit.t += tnear + EPSILON
                 return new_hit
 
-            if firstTri.material.d:
-                if firstTri.material.map_d:
-                    u, v = self.intersect_uv(firstTri)
-                    tex_uv = firstTri.tex_uv
-                    tex_pos = tex_uv.base + tex_uv.u * u + tex_uv.v * v
-                    obj_d = firstTri.material.map_d.get_value(tex_pos)
-                    obj_d *= obj_d * firstTri.material.d
-                else:
-                    obj_d = firstTri.material.d
-                if random()>obj_d:
-                    new_ray = Ray(self.after(tnear+EPSILON),self.direction)
-                    new_hit = new_ray.intersect(other)
-                    if new_hit:
-                        new_hit.t+=tnear+EPSILON
-                    return new_hit
-                else:
-                    return Hit(firstTri, tnear)
-            else:
-                return Hit(firstTri, tnear)
+            # if firstTri.material.d:
+            #     if firstTri.material.map_d:
+            #         u, v = self.intersect_uv(firstTri)
+            #         tex_uv = firstTri.tex_uv
+            #         tex_pos = tex_uv.base + tex_uv.u * u + tex_uv.v * v
+            #         obj_d = firstTri.material.map_d.get_value(tex_pos)
+            #         obj_d *= obj_d * firstTri.material.d
+            #     else:
+            #         obj_d = firstTri.material.d
+            #     if random()>obj_d:
+            #         new_ray = Ray(self.after(tnear+EPSILON),self.direction)
+            #         new_hit = new_ray.intersect(other)
+            #         if new_hit:
+            #             new_hit.t+=tnear+EPSILON
+            #         return new_hit
+            #     else:
+            #         return Hit(firstTri, tnear)
+            # else:
+            return Hit(firstTri, tnear)
 
         if isinstance(other, Triangle):
 

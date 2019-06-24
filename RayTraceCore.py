@@ -158,16 +158,28 @@ def trace_initial(ray, scene, depth, light_samples, first=False):
         tex_uv = hit_object.tex_uv
         tex_pos = tex_uv.base + tex_uv.u * u + tex_uv.v * v
 
+    trans_light = Vec3(0)
     if hit_object.material.d:
         if hit_object.material.map_d:
             obj_d = hit_object.material.map_d.get_value(tex_pos)
             obj_d *= obj_d * hit_object.material.d
         else:
             obj_d = hit_object.material.d
-        if random() >obj_d:
-            posHit = ray.after(hit_t + EPSILON)
-            new_ray = Ray(posHit,ray.direction)
-            return trace_initial(new_ray,scene,depth,light_samples,first)
+
+        tr = 1-obj_d
+        if tr>0:
+            skipped_point = ray.after(hit_t + EPSILON)
+            new_ray = Ray(skipped_point,ray.direction)
+
+            trans_hit = new_ray.intersect(scene)
+            if trans_hit:
+                trans_ammount = e**(-trans_hit.t*tr)
+                trans_light = trace_initial(new_ray,scene,depth,light_samples,False) * trans_ammount
+
+        # if random() >obj_d:
+        #     posHit = ray.after(hit_t + EPSILON)
+        #     new_ray = Ray(posHit,ray.direction)
+        #     return trace_initial(new_ray,scene,depth,light_samples,first)
 
     if hit_object.material.smoothNormal:
         normal = hit_object.b.normal * u + hit_object.c.normal * v + hit_object.a.normal * (
@@ -256,7 +268,7 @@ def trace_initial(ray, scene, depth, light_samples, first=False):
         direct_light += this_light/src[1]
     # direct_light *= len(scene.all_emittors())/len(light_set)
 
-    total_light += direct_light
+    total_light += direct_light*obj_d + trans_light
 
     indirect_light = Vec3(0)
 
