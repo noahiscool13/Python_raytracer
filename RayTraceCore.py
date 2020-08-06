@@ -173,7 +173,8 @@ def trace_initial(ray, scene, depth, light_samples, first=False):
 
             trans_hit = new_ray.intersect(scene)
             if trans_hit:
-                trans_ammount = e**(-trans_hit.t*tr)
+                mapped_trans = 1/max(1/(10**20),1-trans_hit.t)-1
+                trans_ammount = e**(-mapped_trans*tr)
                 trans_light = trace_initial(new_ray,scene,depth,light_samples,False) * trans_ammount
 
         # if random() >obj_d:

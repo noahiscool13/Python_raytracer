@@ -300,7 +300,7 @@ class Ray:
         return self.origin + self.direction * t
 
 
-class Triangle():
+class Triangle:
     def __init__(self, a, b, c, material=Material(), tex_uv=None):
         self.a = a
         self.b = b

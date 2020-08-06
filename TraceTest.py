@@ -4,7 +4,7 @@ from objParser import *
 from RayTraceCore import *
 
 if __name__ == '__main__':
-    with open("water.obj", "r") as file:
+    with open("glass2.obj", "r") as file:
         scene = parse_obj(file.read())
     with open("scenes/north.scenario") as file:
         parse_senario(file.read(), scene)

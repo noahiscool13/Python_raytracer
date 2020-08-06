@@ -346,6 +346,7 @@ class Vec3:
                     self.z * other.x - other.z * self.x,
                     self.x * other.y - other.x * self.y)
 
+    #TODO fix rotations (first if statement, one has y.abs, the other not
     def rotate(self, rotation):
         if abs(rotation.x) > rotation.y:
             Nt = Vec3(rotation.z, 0, -rotation.x) / sqrt(rotation.x ** 2 + rotation.z ** 2)
